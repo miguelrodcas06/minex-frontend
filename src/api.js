@@ -1,60 +1,79 @@
-import axios from 'axios';
+/**
+ * @fileoverview Módulo de configuración de Axios para comunicación con el backend
+ * @module api
+ */
 
-// --- CAMBIO IMPORTANTE ---
-// 1. Intentamos leer la URL desde la configuración global (public/config.js)
-// 2. Si no existe, usamos tu IP de AWS fija como respaldo.
-// Así nunca fallará ni en local ni en producción.
-const URL_BACKEND = window.__APP_CONFIG__?.API_URL || 'http://34.205.99.251:3000/api';
+import axios from "axios";
 
 /**
- * Instancia configurada de Axios
+ * Instancia configurada de Axios para comunicación con el backend (LOCAL)
  */
 const api = axios.create({
-  baseURL: URL_BACKEND, // Usamos la variable inteligente
-  timeout: 5000,
+  // Configuración para trabajar en el propio PC
+  baseURL: "http://localhost:3000/api",
+  timeout: 15000,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
+/**
+ * INTERCEPTOR DE SOLICITUD (REQUEST)
+ * Inyecta el token de autenticación en cada petición si existe.
+ * Es fundamental para que funcionen las peticiones POST, PUT y DELETE.
+ */
+api.interceptors.request.use(
+  (config) => {
+    const token = sessionStorage.getItem("token"); // O localStorage según uses
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  },
+);
+
+/**
+ * INTERCEPTOR DE RESPUESTA (RESPONSE)
+ * Maneja errores centralizados y simplifica la respuesta.
+ */
 api.interceptors.response.use(
   (response) => {
+    // Retornamos directamente los datos (response.data)
     return response.data;
   },
   (error) => {
-    let respuestaError = {
-      ok: false,
-      datos: null,
-      mensaje: 'Error desconocido',
-    };
+    let mensajeError = "Error desconocido";
 
     if (error.response) {
-      respuestaError.mensaje = error.response.data?.mensaje || 
-                             `Error: ${error.response.status} ${error.response.statusText}`;
-      
-      if (error.response.status === 404) {
-        console.warn(`Recurso no encontrado: ${error.config.url}`);
-      } else if (error.response.status === 400) {
-        console.warn(`Solicitud inválida: ${error.config.url}`);
-      } else if (error.response.status >= 500) {
-        console.error(`Error del servidor: ${error.config.url} - Status: ${error.response.status}`);
+      // El servidor respondió con un código de error (4xx, 5xx)
+      mensajeError = error.response.data?.mensaje || `Error: ${error.response.status} ${error.response.statusText}`;
+
+      // Si el error es 401/403 Y ya había un token activo, significa que
+      // la sesión expiró o fue revocada → limpiar y redirigir al inicio.
+      // Si NO hay token (p.ej. intento de login fallido), dejar que el
+      // componente maneje el error con su propio mensaje.
+      if (error.response.status === 401 || error.response.status === 403) {
+        const tokenActivo = sessionStorage.getItem("token");
+        if (tokenActivo) {
+          sessionStorage.removeItem("token");
+          sessionStorage.removeItem("usuario");
+          window.location.href = "/";
+        }
       }
     } else if (error.request) {
-      respuestaError.mensaje = 'No hay respuesta del servidor. Verifica tu conexión.';
-      console.error('No hay respuesta del servidor:', error.request);
+      // No hubo respuesta del servidor
+      mensajeError = "No se pudo conectar con el servidor.";
     } else {
-      respuestaError.mensaje = error.message || 'Error al realizar la solicitud';
-      console.error('Error en la solicitud:', error.message);
+      // Error al configurar la petición
+      mensajeError = error.message;
     }
 
-    return Promise.reject(respuestaError);
-  }
+    // Retornamos un objeto de error rechazado con el mensaje procesado
+    return Promise.reject({ mensaje: mensajeError, original: error });
+  },
 );
 
-// Solo si quiero volver a trabajar 100% local
-// window.__APP_CONFIG__ = {
-//     API_URL: "http://localhost:3000/api"
-// };
-
 export default api;
-

@@ -1,77 +1,36 @@
 import { RouterProvider } from "react-router/dom";
 import { createBrowserRouter } from "react-router";
 
-import LandingPage from "./components/LandingPage";
-//museos
-import ListadoMuseos from "./components/ListadoMuseos";
-import AltaMuseo from "./components/AltaMuseo";
-import EditarMuseo from "./components/EditarMuseo";
-import BusquedaMuseos from "./components/BusquedaMuseos";
-import BusquedaMuseosFecha from "./components/BusquedaMuseosFecha";
-import GraficaMuseos from "./components/GraficaMuseos";
-//salas
-import ListadoSalas from "./components/ListadoSalas";
-import AltaSala from "./components/AltaSala";
-import EditarSala from "./components/EditarSala";
-import BusquedaSalas from "./components/BusquedaSalas";
-
 import Home from "./pages/Home";
+import Panel from "./pages/Panel";
+import Simulador from "./pages/Simulador";
+import ErrorPage from "./pages/ErrorPage";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 const router = createBrowserRouter([
   {
     path: "/",
     Component: Home,
+    errorElement: <ErrorPage />,
     children: [
-      { index: true, Component: LandingPage },
+      { index: true, Component: Panel },
+      { path: "simulador", Component: Simulador },
       {
-        path: "/museums/new",
-        element: <AltaMuseo />,
-      },
-      {
-        path: "/museums",
-        element: <ListadoMuseos />,
-      },
-      {
-        path: "/museums/editar/:id",
-        element: <EditarMuseo />,
-      },
-      {
-        path: "/museums/buscar",
-        element: <BusquedaMuseos />,
-      },
-      {
-        path: "/museums/buscar-fecha",
-        element: <BusquedaMuseosFecha />,
-      },
-      {
-        path: "/museums/graph",
-        element: <GraficaMuseos />,
-      },
-      {
-        path: "/rooms/new",
-        element: <AltaSala />,
-      },
-      {
-        path: "/rooms",
-        element: <ListadoSalas />,
-      },
-      {
-        path: "/rooms/editar/:id",
-        element: <EditarSala />,
-      },
-      {
-        path: "/rooms/buscar",
-        element: <BusquedaSalas />,
+        Component: ProtectedRoute,
+        children: [
+          { path: "tesoreria", lazy: () => import("./pages/Tesoreria").then((m) => ({ Component: m.default })) },
+        ],
       },
     ],
   },
+  {
+    path: "*",
+    element: <ErrorPage />,
+  },
 ]);
+
 function App() {
-  return (
-    <>
-      <RouterProvider router={router} />
-    </>
-  );
+  return <RouterProvider router={router} />;
 }
 
 export default App;

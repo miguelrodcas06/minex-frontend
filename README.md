@@ -1,17 +1,45 @@
-# Gestión Cultural Frontend
+# MineX
 
-Frontend del proyecto de gestión cultural.
+Proyecto de MineX usando react para crear el front de la aplicación
 
 ## Enlace al repositorio de GitHub
 
-[https://github.com/xmrodcas971-boop/frontend_gestion_cultural/tree/master](https://github.com/xmrodcas971-boop/frontend_gestion_cultural/tree/master)
+[https://github.com/miguelrodcas06/minex-frontend](https://github.com/miguelrodcas06/minex-frontend)
 
+## Datos para la conexión a la base de datos
 
-### Enlace a la aplicación desplegada en AWS
+- *Nombre de la base de datos:* minex
+- *Usuario:* root
+- *Contraseña:* test
+- *Host:* localhost
+- *Puerto:* 3306
 
-1.  Enlace a frontend (S3):
-    http://frontend-gestion-cultural-miguel.s3-website-us-east-1.amazonaws.com/
+## Ejecución del Proyecto
+
+### Backend
+
+1.  Navegar al directorio del backend:
+    bash
+    cd ../minex-backend
     
-2.  Enlace a backend (EC2):
-    http://34.205.99.251:3000/api/museums
+2.  Instalar dependencias:
+    bash
+    npm install
+    
+3.  Iniciar el servidor de desarrollo:
+    bash
+    npm run dev
+    
+### Frontend
 
+1.  Navegar al directorio del frontend:
+    bash
+    cd ../minex-frontend
+    
+2.  Instalar dependencias:
+    bash
+    npm install
+    
+3.  Iniciar el servidor de desarrollo:
+    bash
+    npm run dev
