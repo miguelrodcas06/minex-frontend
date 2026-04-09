@@ -32,7 +32,7 @@ function LoginDialog({ open, onClose, onLoginSuccess }) {
     "& .MuiInputLabel-root.Mui-focused": { color: ORANGE },
   };
 
-  const [modo, setModo]         = useState("login"); // "login" | "registro"
+  const [modo, setModo]         = useState("login"); // "login" | "registro" | "reactivar"
   const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
@@ -61,10 +61,28 @@ function LoginDialog({ open, onClose, onLoginSuccess }) {
     } catch (err) {
       const mensaje = err.mensaje ?? "Credenciales incorrectas.";
       if (mensaje.toLowerCase().includes("desactivada") || mensaje.toLowerCase().includes("inactiv")) {
-        setError("Tu cuenta está desactivada. Contacta con soporte para reactivarla.");
+        setModo("reactivar");
+        setError("");
+        setSuccess("Tu cuenta está desactivada. Introduce tus credenciales para reactivarla.");
       } else {
         setError(mensaje);
       }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleReactivar = async (e) => {
+    e.preventDefault();
+    if (!email || !password) { setError("Completa todos los campos."); return; }
+    setLoading(true); setError("");
+    try {
+      await api.put("/usuarios/reactivar", { email, password });
+      resetForm();
+      setModo("login");
+      setSuccess("¡Cuenta reactivada! Ya puedes iniciar sesión.");
+    } catch (err) {
+      setError(err.mensaje ?? "No se pudo reactivar la cuenta.");
     } finally {
       setLoading(false);
     }
@@ -85,8 +103,9 @@ function LoginDialog({ open, onClose, onLoginSuccess }) {
     }
   };
 
-  const isLogin = modo === "login";
-  const isDark  = theme.palette.mode === "dark";
+  const isLogin      = modo === "login";
+  const isReactivar  = modo === "reactivar";
+  const isDark       = theme.palette.mode === "dark";
 
   return (
     <Dialog
@@ -131,11 +150,13 @@ function LoginDialog({ open, onClose, onLoginSuccess }) {
 
         {/* Título */}
         <Typography variant="h6" sx={{ color: "text.primary", fontWeight: 700, mb: 0.5 }}>
-          {isLogin ? "Iniciar Sesión" : "Crear cuenta"}
+          {isLogin ? "Iniciar Sesión" : isReactivar ? "Reactivar cuenta" : "Crear cuenta"}
         </Typography>
         <Typography variant="body2" sx={{ color: "text.secondary", mb: 3 }}>
           {isLogin
             ? "Accede a tu cuenta de MineX para gestionar tu tesorería."
+            : isReactivar
+            ? "Introduce tus credenciales para reactivar tu cuenta."
             : "Regístrate para guardar tus alertas y tesorería."}
         </Typography>
 
@@ -162,8 +183,8 @@ function LoginDialog({ open, onClose, onLoginSuccess }) {
         )}
 
         {/* Formulario */}
-        <Box component="form" onSubmit={isLogin ? handleLogin : handleRegistro}>
-          {!isLogin && (
+        <Box component="form" onSubmit={isLogin ? handleLogin : isReactivar ? handleReactivar : handleRegistro}>
+          {!isLogin && !isReactivar && (
             <TextField
               label="Nombre de usuario"
               value={username}
@@ -212,20 +233,22 @@ function LoginDialog({ open, onClose, onLoginSuccess }) {
           >
             {loading
               ? <CircularProgress size={20} sx={{ color: "white" }} />
-              : isLogin ? "Iniciar Sesión" : "Crear cuenta"}
+              : isLogin ? "Iniciar Sesión"
+              : isReactivar ? "Reactivar cuenta"
+              : "Crear cuenta"}
           </Button>
         </Box>
 
-        {/* Toggle login / registro */}
+        {/* Toggle login / registro / reactivar */}
         <Box sx={{ textAlign: "center", mt: 2.5 }}>
           <Typography variant="caption" sx={{ color: "text.secondary" }}>
-            {isLogin ? "¿No tienes cuenta? " : "¿Ya tienes cuenta? "}
+            {isReactivar ? "¿Recuerdas tu contraseña? " : isLogin ? "¿No tienes cuenta? " : "¿Ya tienes cuenta? "}
             <Box
               component="span"
-              onClick={() => cambiarModo(isLogin ? "registro" : "login")}
+              onClick={() => cambiarModo(isReactivar ? "login" : isLogin ? "registro" : "login")}
               sx={{ color: ORANGE, cursor: "pointer", fontWeight: 600, "&:hover": { textDecoration: "underline" } }}
             >
-              {isLogin ? "Regístrate" : "Inicia sesión"}
+              {isReactivar ? "Inicia sesión" : isLogin ? "Regístrate" : "Inicia sesión"}
             </Box>
           </Typography>
         </Box>

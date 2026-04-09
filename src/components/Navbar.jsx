@@ -443,6 +443,7 @@ function Navbar() {
         onClose={() => setPerfilOpen(false)}
         usuario={usuario}
         onUsernameChange={handleUsernameChange}
+        onBaja={handleLogout}
       />
 
       {/* ── Snackbar ── */}

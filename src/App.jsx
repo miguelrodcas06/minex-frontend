@@ -21,6 +21,7 @@ const router = createBrowserRouter([
           { path: "tesoreria", lazy: () => import("./pages/Tesoreria").then((m) => ({ Component: m.default })) },
         ],
       },
+      { path: "noticias", lazy: () => import("./pages/Noticias").then((m) => ({ Component: m.default })) },
     ],
   },
   {

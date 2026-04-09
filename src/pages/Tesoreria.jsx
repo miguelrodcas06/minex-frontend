@@ -137,10 +137,18 @@ function Tesoreria() {
     setLoading(true);
     setFetchError(null);
     try {
-      const res = await api.get("/tesoreria");
-      setTesoreria(res.datos);
-    } catch (e) {
-      setFetchError(e.mensaje ?? "Error al cargar la tesorería.");
+      const [resTesoreria, resSaldo] = await Promise.allSettled([
+        api.get("/tesoreria"),
+        api.get("/usuarios/saldo"),
+      ]);
+      if (resTesoreria.status === "fulfilled") setTesoreria(resTesoreria.value.datos);
+      else setFetchError(resTesoreria.reason?.mensaje ?? "Error al cargar la tesorería.");
+      if (resSaldo.status === "fulfilled" && resSaldo.value.balance != null) {
+        const saldo = parseFloat(resSaldo.value.balance);
+        setBalance(saldo);
+        const u = JSON.parse(sessionStorage.getItem("usuario") ?? "null");
+        if (u) sessionStorage.setItem("usuario", JSON.stringify({ ...u, balance: saldo }));
+      }
     } finally {
       setLoading(false);
     }
@@ -255,7 +263,7 @@ function Tesoreria() {
               }}>
                 <AccountBalanceIcon sx={{ color: ORANGE, fontSize: 20 }} />
               </Box>
-              <Typography variant="h5" sx={{ color: "white", fontWeight: 700 }}>
+              <Typography variant="h5" sx={{ color: "text.primary", fontWeight: 700 }}>
                 Tesorería Simbólica
               </Typography>
             </Box>
@@ -282,7 +290,7 @@ function Tesoreria() {
 
         {/* ── Summary cards ── */}
         {!loading && tesoreria && (
-          <Grid container spacing={2} sx={{ mb: 4 }}>
+          <Grid container spacing={2} sx={{ mb: 4 }} alignItems="stretch">
             {[
               {
                 label: "Valor Actual",
@@ -291,7 +299,7 @@ function Tesoreria() {
                 accent: ORANGE,
               },
               {
-                label: "Costo Total",
+                label: "Total Invertido",
                 value: `$${fmt(resumen.total_invertido)}`,
                 icon:  <AttachMoneyIcon sx={{ fontSize: 26, color: "#64b5f6" }} />,
                 accent: "#64b5f6",
@@ -306,8 +314,9 @@ function Tesoreria() {
                 accent: esGanancia ? "#4caf50" : "#f44336",
               },
             ].map(({ label, value, extra, icon, accent }) => (
-              <Grid key={label} size={{ xs: 12, sm: 4 }}>
+              <Grid key={label} size={{ xs: 12, sm: 4 }} sx={{ display: "flex" }}>
                 <Card sx={{
+                  flex: 1,
                   backgroundColor: CARD_BG,
                   border: `1px solid ${accent}33`,
                   borderRadius: 2,
@@ -327,7 +336,7 @@ function Tesoreria() {
                       <Typography variant="caption" sx={{ color: TEXT_MUTED, display: "block" }}>
                         {label}
                       </Typography>
-                      <Typography variant="h6" sx={{ color: "white", fontWeight: 700, lineHeight: 1.2 }}>
+                      <Typography variant="h6" sx={{ color: "text.primary", fontWeight: 700, lineHeight: 1.2 }}>
                         {value}
                       </Typography>
                       {extra && (
@@ -354,7 +363,7 @@ function Tesoreria() {
               <Box sx={{ px: 2.5, pt: 2.5, pb: 0 }}>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
                   <AddCircleOutlineIcon sx={{ color: ORANGE, fontSize: 20 }} />
-                  <Typography variant="subtitle1" sx={{ color: "white", fontWeight: 600 }}>
+                  <Typography variant="subtitle1" sx={{ color: "text.primary", fontWeight: 600 }}>
                     Agregar Mineral
                   </Typography>
                 </Box>
@@ -425,7 +434,7 @@ function Tesoreria() {
                     border: "1px solid rgba(224,123,57,0.2)",
                   }}>
                     <Typography variant="caption" sx={{ color: TEXT_MUTED }}>Coste estimado</Typography>
-                    <Typography variant="body2" sx={{ color: "white", fontWeight: 600 }}>
+                    <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 600 }}>
                       ${fmt(costoEstimado)}
                     </Typography>
                   </Box>
@@ -455,7 +464,7 @@ function Tesoreria() {
               <CardContent>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
                   <InfoOutlinedIcon sx={{ color: TEXT_MUTED, fontSize: 18 }} />
-                  <Typography variant="subtitle2" sx={{ color: "white", fontWeight: 600 }}>
+                  <Typography variant="subtitle2" sx={{ color: "text.primary", fontWeight: 600 }}>
                     Sobre la Tesorería
                   </Typography>
                 </Box>
@@ -475,7 +484,7 @@ function Tesoreria() {
               <Box sx={{ px: 2.5, pt: 2.5, pb: 0 }}>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
                   <ShowChartIcon sx={{ color: ORANGE, fontSize: 20 }} />
-                  <Typography variant="subtitle1" sx={{ color: "white", fontWeight: 600 }}>
+                  <Typography variant="subtitle1" sx={{ color: "text.primary", fontWeight: 600 }}>
                     Mi Colección
                   </Typography>
                   {items.length > 0 && (
@@ -557,7 +566,7 @@ function Tesoreria() {
                               }} />
                               <Box sx={{ flex: 1, minWidth: 0 }}>
                                 <Box sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 0.75, mb: 0.5 }}>
-                                  <Typography variant="body2" sx={{ color: "white", fontWeight: 600 }}>
+                                  <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 600 }}>
                                     {mineralLabel(item.mineral)}
                                   </Typography>
                                   <Chip
@@ -588,7 +597,7 @@ function Tesoreria() {
                             {/* Right: value + P&L + delete */}
                             <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexShrink: 0 }}>
                               <Box sx={{ textAlign: "right" }}>
-                                <Typography variant="body2" sx={{ color: "white", fontWeight: 600 }}>
+                                <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 600 }}>
                                   ${fmt(item.valor_actual)}
                                 </Typography>
                                 <Box sx={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 0.25 }}>
@@ -653,7 +662,7 @@ function Tesoreria() {
 
           return (
             <>
-              <DialogTitle sx={{ color: "white", pb: 1 }}>
+              <DialogTitle sx={{ color: "text.primary", pb: 1 }}>
                 Vender {mineralLabel(item.mineral)}
               </DialogTitle>
 
@@ -668,7 +677,7 @@ function Tesoreria() {
                   <Typography variant="caption" sx={{ color: TEXT_MUTED, display: "block" }}>
                     Disponible
                   </Typography>
-                  <Typography variant="body1" sx={{ color: "white", fontWeight: 600 }}>
+                  <Typography variant="body1" sx={{ color: "text.primary", fontWeight: 600 }}>
                     {fmt(item.cantidad, 4)} gramos
                   </Typography>
                   <Typography variant="caption" sx={{ color: TEXT_MUTED }}>
