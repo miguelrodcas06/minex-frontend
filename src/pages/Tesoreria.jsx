@@ -244,7 +244,7 @@ function Tesoreria() {
   // ─── Render ─────────────────────────────────────────────────────────────────
 
   return (
-    <Box sx={{ backgroundColor: DARK_BG, minHeight: "100vh", py: 4 }}>
+    <Box sx={{ backgroundColor: DARK_BG, py: 4 }}>
       <Container maxWidth="lg">
 
         {/* ── Header ── */}
@@ -459,23 +459,6 @@ function Tesoreria() {
               </CardContent>
             </Card>
 
-            {/* Info card */}
-            <Card sx={{ backgroundColor: CARD_BG, border: `1px solid ${BORDER}`, borderRadius: 2, mt: 3 }}>
-              <CardContent>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
-                  <InfoOutlinedIcon sx={{ color: TEXT_MUTED, fontSize: 18 }} />
-                  <Typography variant="subtitle2" sx={{ color: "text.primary", fontWeight: 600 }}>
-                    Sobre la Tesorería
-                  </Typography>
-                </Box>
-                <Typography variant="caption" sx={{ color: TEXT_MUTED, lineHeight: 1.8, display: "block" }}>
-                  La Tesorería Simbólica simula la compra y venta de metales preciosos usando precios en
-                  tiempo real de Yahoo Finance. Cada compra descuenta del balance virtual y cada venta lo
-                  incrementa al precio de mercado actual.
-                </Typography>
-              </CardContent>
-            </Card>
-
           </Grid>
 
           {/* Right column: holdings list */}
@@ -631,6 +614,25 @@ function Tesoreria() {
                   </Box>
                 )}
 
+              </CardContent>
+            </Card>
+          </Grid>
+
+          {/* Info card — ancho completo */}
+          <Grid size={{ xs: 12 }}>
+            <Card sx={{ backgroundColor: CARD_BG, border: `1px solid ${BORDER}`, borderRadius: 2 }}>
+              <CardContent sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>
+                <InfoOutlinedIcon sx={{ color: TEXT_MUTED, fontSize: 18, mt: 0.2, flexShrink: 0 }} />
+                <Box>
+                  <Typography variant="subtitle2" sx={{ color: "text.primary", fontWeight: 600, mb: 0.5 }}>
+                    Sobre la Tesorería
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: TEXT_MUTED, lineHeight: 1.8, display: "block" }}>
+                    La Tesorería Simbólica simula la compra y venta de metales preciosos usando precios en
+                    tiempo real de Yahoo Finance. Cada compra descuenta del balance virtual y cada venta lo
+                    incrementa al precio de mercado actual.
+                  </Typography>
+                </Box>
               </CardContent>
             </Card>
           </Grid>

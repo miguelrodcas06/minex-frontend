@@ -17,6 +17,7 @@ import DashboardIcon from "@mui/icons-material/Dashboard";
 import CompareArrowsIcon from "@mui/icons-material/CompareArrows";
 import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
 import ArticleIcon from "@mui/icons-material/Article";
+import StorefrontIcon from "@mui/icons-material/Storefront";
 import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
 import LogoutIcon from "@mui/icons-material/Logout";
 import MenuIcon from "@mui/icons-material/Menu";
@@ -33,10 +34,11 @@ export const SIDEBAR_W = 240;
 const ORANGE = "#e07b39";
 
 const NAV_LINKS = [
-  { label: "Panel",     to: "/",          icon: <DashboardIcon     fontSize="small" />, end: true              },
-  { label: "Simulador", to: "/simulador", icon: <CompareArrowsIcon fontSize="small" />                        },
-  { label: "Tesorería", to: "/tesoreria", icon: <AccountBalanceIcon fontSize="small" />, protected: true       },
-  { label: "Noticias",  to: "/noticias",  icon: <ArticleIcon       fontSize="small" />                        },
+  { label: "Panel",     to: "/",           icon: <DashboardIcon     fontSize="small" />, end: true              },
+  { label: "Simulador", to: "/simulador",  icon: <CompareArrowsIcon fontSize="small" />                        },
+  { label: "Tesorería", to: "/tesoreria",  icon: <AccountBalanceIcon fontSize="small" />, protected: true       },
+  { label: "Noticias",  to: "/noticias",   icon: <ArticleIcon       fontSize="small" />                        },
+  { label: "Catálogo",  to: "/catalogo",   icon: <StorefrontIcon    fontSize="small" />                        },
 ];
 
 // ─── Sidebar content (shared between permanent + temporary drawer) ─────────────

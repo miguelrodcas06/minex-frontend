@@ -10,7 +10,6 @@ import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
 import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
-import ListSubheader from "@mui/material/ListSubheader";
 import FormControl from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
 import IconButton from "@mui/material/IconButton";
@@ -21,13 +20,13 @@ import CircularProgress from "@mui/material/CircularProgress";
 import Switch from "@mui/material/Switch";
 import Snackbar from "@mui/material/Snackbar";
 
-import SwapVertIcon from "@mui/icons-material/SwapVert";
 import CalculateIcon from "@mui/icons-material/Calculate";
 import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
 import NotificationsOffIcon from "@mui/icons-material/NotificationsOff";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
 
 import api from "../api";
 
@@ -41,9 +40,7 @@ const MINERALS = [
 ];
 
 // Monedas soportadas por el backend vía ?moneda=XXX
-// "GRM" es un código interno para indicar que la cantidad ya está en gramos
 const CURRENCIES = [
-  { code: "GRM", label: "Gramos (g)",           flag: "⚖️" },
   { code: "USD", label: "Dólar estadounidense", flag: "🇺🇸" },
   { code: "EUR", label: "Euro",                 flag: "🇪🇺" },
   { code: "GBP", label: "Libra esterlina",      flag: "🇬🇧" },
@@ -53,11 +50,6 @@ const CURRENCIES = [
   { code: "AUD", label: "Dólar australiano",    flag: "🇦🇺" },
   { code: "CNY", label: "Yuan chino",           flag: "🇨🇳" },
 ];
-
-// Helpers para parsear el valor prefijado del selector "Hacia"
-// Formato: "m:oro" = mineral, "c:EUR" = moneda
-const esMoneda   = (v) => v.startsWith("c:");
-const parsarHacia = (v) => v.slice(2); // quita el prefijo
 
 const ORANGE = "#e07b39";
 
@@ -99,14 +91,16 @@ function Simulador() {
   const [isLoggedIn, setIsLoggedIn] = useState(() => Boolean(sessionStorage.getItem("token")));
 
   // — Calculadora —
-  // "hacia" usa prefijo: "m:plata" = mineral · "c:EUR" = moneda
-  const [cantidad,     setCantidad]     = useState("100");
-  const [monedaDesde,  setMonedaDesde]  = useState("GRM");
-  const [mineralDesde, setMineralDesde] = useState("oro");
-  const [hacia,        setHacia]        = useState("m:plata");
-  const [resultado,    setResultado]    = useState(null);
-  const [loadingCalc,  setLoadingCalc]  = useState(false);
-  const [errorCalc,    setErrorCalc]    = useState(null);
+  const [cantidad,       setCantidad]       = useState("100");
+  const [mineralDesde,   setMineralDesde]   = useState("oro");
+  const [monedaHacia,    setMonedaHacia]    = useState("USD");
+  const [resultado,      setResultado]      = useState(null);
+  const [loadingCalc,    setLoadingCalc]    = useState(false);
+  const [errorCalc,      setErrorCalc]      = useState(null);
+
+  // — Añadir a tesorería —
+  const [loadingTesoreria, setLoadingTesoreria] = useState(false);
+  const [snackTesoreria,   setSnackTesoreria]   = useState({ open: false, mensaje: "", severity: "success" });
 
   // — Alertas —
   const [alertMineral,   setAlertMineral]   = useState("");
@@ -181,82 +175,26 @@ function Simulador() {
     setResultado(null);
 
     try {
-      const currDesde = CURRENCIES.find((c) => c.code === monedaDesde);
-      const esGramos  = monedaDesde === "GRM";
+      // DESDE siempre son gramos → HACIA siempre es una moneda
+      const endpoint = monedaHacia === "USD"
+        ? `/minerales/${mineralDesde}`
+        : `/minerales/${mineralDesde}?moneda=${monedaHacia}`;
 
-      // Paso 1: obtener gramos del mineral origen
-      let gramosOrigen, precioPorGramo;
-      if (esGramos) {
-        // La cantidad ya es en gramos, no hay que convertir
-        gramosOrigen   = cant;
-        precioPorGramo = null;
-      } else {
-        // Convertir importe monetario → gramos
-        const endpoint = monedaDesde === "USD"
-          ? `/minerales/${mineralDesde}`
-          : `/minerales/${mineralDesde}?moneda=${monedaDesde}`;
-        const resOrigen = await api.get(endpoint);
-        precioPorGramo = resOrigen.datos.precio;
-        gramosOrigen   = cant / precioPorGramo;
-      }
+      const res          = await api.get(endpoint);
+      const precioPorGramo = res.datos.precio;
+      const totalDestino   = cant * precioPorGramo;
+      const currHacia      = CURRENCIES.find((c) => c.code === monedaHacia);
 
-      const valor = parsarHacia(hacia);
-
-      if (esMoneda(hacia)) {
-        // Paso 2a: convertir los gramos al valor en la moneda destino
-        const currHacia = CURRENCIES.find((c) => c.code === valor);
-        let totalDestino;
-        if (valor === "GRM") {
-          // El destino son gramos directamente — ya los tenemos calculados
-          totalDestino = gramosOrigen;
-        } else if (valor === monedaDesde) {
-          totalDestino = cant; // misma moneda, sin conversión
-        } else {
-          const endpointH = valor === "USD"
-            ? `/minerales/${mineralDesde}`
-            : `/minerales/${mineralDesde}?moneda=${valor}`;
-          const resHacia   = await api.get(endpointH);
-          totalDestino = gramosOrigen * resHacia.datos.precio;
-        }
-
-        setResultado({
-          tipo: "moneda",
-          cant, monedaDesde, gramosOrigen,
-          labelDesde:    MINERALS.find((m) => m.nombre === mineralDesde)?.label,
-          flagDesde:     currDesde?.flag,
-          totalDestino,
-          monedaHacia:   valor,
-          labelMonedaH:  currHacia?.label,
-          flagHacia:     currHacia?.flag,
-          precioPorGramo,
-        });
-      } else {
-        // Paso 2b: convertir los gramos del origen a gramos del mineral destino
-        const mineralHacia = valor;
-        // Necesitamos precios en USD para hacer la conversión entre minerales
-        const [resA, resB] = await Promise.all([
-          api.get(`/minerales/${mineralDesde}`),
-          api.get(`/minerales/${mineralHacia}`),
-        ]);
-        const precioAusd   = resA.datos.precio;
-        const precioBusd   = resB.datos.precio;
-        const valorUSD     = gramosOrigen * precioAusd;
-        const equivalente  = valorUSD / precioBusd;
-
-        setResultado({
-          tipo: "mineral",
-          cant, monedaDesde, gramosOrigen,
-          labelDesde:  MINERALS.find((m) => m.nombre === mineralDesde)?.label,
-          flagDesde:   currDesde?.flag,
-          labelHacia:  MINERALS.find((m) => m.nombre === mineralHacia)?.label,
-          colorHacia:  MINERALS.find((m) => m.nombre === mineralHacia)?.color,
-          equivalente,
-          valorUSD,
-          precioAusd,
-          precioBusd,
-          precioPorGramo,
-        });
-      }
+      setResultado({
+        cant,
+        mineralDesde,
+        labelDesde:   MINERALS.find((m) => m.nombre === mineralDesde)?.label,
+        totalDestino,
+        monedaHacia,
+        labelMonedaH: currHacia?.label,
+        flagHacia:    currHacia?.flag,
+        precioPorGramo,
+      });
     } catch {
       setErrorCalc("No se pudo obtener la cotización. Comprueba el servidor.");
     } finally {
@@ -264,13 +202,31 @@ function Simulador() {
     }
   };
 
-  // Swap solo si ambos lados son minerales
-  const swapMinerales = () => {
-    if (esMoneda(hacia)) return;
-    const nombreHacia = parsarHacia(hacia);
-    setMineralDesde(nombreHacia);
-    setHacia(`m:${mineralDesde}`);
-    setResultado(null);
+  // — Añadir resultado a la tesorería —
+  const añadirATesoreria = async () => {
+    if (!resultado) return;
+    setLoadingTesoreria(true);
+    try {
+      // El backend siempre trabaja en USD: calcula el coste con precio spot actual
+      // y lo descuenta del balance del usuario — no necesitamos convertir aquí
+      await api.post("/tesoreria", {
+        mineral:  resultado.mineralDesde,
+        cantidad: resultado.cant,
+      });
+      setSnackTesoreria({
+        open:     true,
+        mensaje:  `✅ ${resultado.cant} g de ${resultado.labelDesde} añadidos a tu tesorería`,
+        severity: "success",
+      });
+    } catch (err) {
+      setSnackTesoreria({
+        open:     true,
+        mensaje:  err.mensaje ?? "Error al añadir a la tesorería",
+        severity: "error",
+      });
+    } finally {
+      setLoadingTesoreria(false);
+    }
   };
 
   // — Crear alerta —
@@ -335,10 +291,10 @@ function Simulador() {
               DESDE
             </Typography>
             <Grid container spacing={2} sx={{ mt: 0.5, mb: 1 }}>
-              <Grid size={{ xs: 12, sm: 4 }}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   fullWidth
-                  label="Cantidad"
+                  label="Cantidad (gramos)"
                   type="number"
                   value={cantidad}
                   onChange={(e) => { setCantidad(e.target.value); setResultado(null); }}
@@ -346,24 +302,7 @@ function Simulador() {
                   sx={inputSx}
                 />
               </Grid>
-              <Grid size={{ xs: 12, sm: 4 }}>
-                <FormControl fullWidth sx={inputSx}>
-                  <InputLabel>Moneda</InputLabel>
-                  <Select
-                    value={monedaDesde}
-                    label="Moneda"
-                    onChange={(e) => { setMonedaDesde(e.target.value); setResultado(null); }}
-                    MenuProps={menuSx}
-                  >
-                    {CURRENCIES.map((c) => (
-                      <MenuItem key={c.code} value={c.code}>
-                        {c.flag} {c.code} — {c.label}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid size={{ xs: 12, sm: 4 }}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <FormControl fullWidth sx={inputSx}>
                   <InputLabel>Mineral</InputLabel>
                   <Select
@@ -382,49 +321,28 @@ function Simulador() {
               </Grid>
             </Grid>
 
-            {/* Botón swap (solo activo si "hacia" es un mineral) */}
-            <Box sx={{ display: "flex", justifyContent: "center", my: 1 }}>
-              <IconButton
-                onClick={swapMinerales}
-                disabled={esMoneda(hacia)}
-                sx={{
-                  border: `1px solid ${BORDER}`,
-                  backgroundColor: CARD_BG,
-                  color: esMoneda(hacia) ? TEXT_MUTED : ORANGE,
-                  "&:hover": { backgroundColor: "rgba(224,123,57,0.1)" },
-                  "&.Mui-disabled": { color: TEXT_MUTED },
-                }}
-              >
-                <SwapVertIcon />
-              </IconButton>
-            </Box>
+            {/* Separador */}
+            <Divider sx={{ borderColor: BORDER, my: 2 }}>
+              <Typography variant="caption" sx={{ color: TEXT_MUTED, fontWeight: 600, letterSpacing: 1, px: 1 }}>
+                EQUIVALE A
+              </Typography>
+            </Divider>
 
             {/* Hacia */}
             <Typography variant="caption" sx={{ color: TEXT_MUTED, fontWeight: 600, letterSpacing: 1 }}>
               HACIA
             </Typography>
             <FormControl fullWidth sx={{ ...inputSx, mt: 1, mb: 2 }}>
-              <InputLabel>Mineral / Moneda</InputLabel>
+              <InputLabel>Moneda</InputLabel>
               <Select
-                value={hacia}
-                label="Mineral / Moneda"
-                onChange={(e) => { setHacia(e.target.value); setResultado(null); }}
+                value={monedaHacia}
+                label="Moneda"
+                onChange={(e) => { setMonedaHacia(e.target.value); setResultado(null); }}
                 MenuProps={menuSx}
               >
-                <ListSubheader sx={{ backgroundColor: "#1c2333", color: TEXT_MUTED, fontSize: "0.7rem", letterSpacing: 1 }}>
-                  MINERALES
-                </ListSubheader>
-                {MINERALS.map((m) => (
-                  <MenuItem key={`m:${m.nombre}`} value={`m:${m.nombre}`}>
-                    <MineralOption mineral={m} />
-                  </MenuItem>
-                ))}
-                <ListSubheader sx={{ backgroundColor: "#1c2333", color: TEXT_MUTED, fontSize: "0.7rem", letterSpacing: 1 }}>
-                  MONEDAS
-                </ListSubheader>
                 {CURRENCIES.map((c) => (
-                  <MenuItem key={`c:${c.code}`} value={`c:${c.code}`}>
-                    {c.flag} {c.label} ({c.code})
+                  <MenuItem key={c.code} value={c.code}>
+                    {c.flag} {c.code} — {c.label}
                   </MenuItem>
                 ))}
               </Select>
@@ -466,47 +384,45 @@ function Simulador() {
                   textAlign: "center",
                 }}
               >
-                {(() => {
-                  const esG = resultado.monedaDesde === "GRM";
-                  const desdeLabel = esG
-                    ? `${resultado.cant} g de ${resultado.labelDesde}`
-                    : `${resultado.flagDesde} ${resultado.cant.toLocaleString()} ${resultado.monedaDesde} de ${resultado.labelDesde} (${resultado.gramosOrigen.toFixed(4)} g)`;
+                <Typography variant="body2" sx={{ color: TEXT_MUTED, mb: 0.5 }}>
+                  {resultado.cant} g de {resultado.labelDesde} equivalen a
+                </Typography>
+                <Typography variant="h4" sx={{ color: ORANGE, fontWeight: 700 }}>
+                  {resultado.totalDestino.toFixed(4)} {resultado.monedaHacia}
+                </Typography>
+                <Typography variant="body2" sx={{ color: TEXT_MAIN, fontWeight: 600 }}>
+                  {resultado.flagHacia} {resultado.labelMonedaH}
+                </Typography>
+                <Divider sx={{ borderColor: BORDER, my: 1.5 }} />
+                <Typography variant="caption" sx={{ color: TEXT_MUTED }}>
+                  Precio {resultado.labelDesde}: {resultado.precioPorGramo.toFixed(4)} {resultado.monedaHacia}/g
+                </Typography>
 
-                  return resultado.tipo === "mineral" ? (
-                    <>
-                      <Typography variant="body2" sx={{ color: TEXT_MUTED, mb: 0.5 }}>
-                        {desdeLabel} equivalen a
+                {/* Botón añadir a tesorería (solo si está logueado) */}
+                {isLoggedIn && (
+                  <Box sx={{ mt: 2 }}>
+                    <Button
+                      variant="outlined"
+                      startIcon={loadingTesoreria ? <CircularProgress size={14} color="inherit" /> : <AccountBalanceIcon />}
+                      onClick={añadirATesoreria}
+                      disabled={loadingTesoreria}
+                      sx={{
+                        borderColor: ORANGE,
+                        color: ORANGE,
+                        textTransform: "none",
+                        fontWeight: 600,
+                        "&:hover": { backgroundColor: "rgba(224,123,57,0.1)", borderColor: ORANGE },
+                      }}
+                    >
+                      {loadingTesoreria ? "Añadiendo..." : `Añadir ${resultado.cant} g de ${resultado.labelDesde} a mi tesorería`}
+                    </Button>
+                    {resultado.monedaHacia !== "USD" && (
+                      <Typography variant="caption" sx={{ display: "block", mt: 0.75, color: TEXT_MUTED }}>
+                        El coste se descontará de tu saldo en USD al precio spot actual.
                       </Typography>
-                      <Typography variant="h4" sx={{ color: resultado.colorHacia ?? ORANGE, fontWeight: 700 }}>
-                        {resultado.equivalente.toFixed(6)} g
-                      </Typography>
-                      <Typography variant="body2" sx={{ color: TEXT_MAIN, fontWeight: 600 }}>
-                        de {resultado.labelHacia}
-                      </Typography>
-                      <Divider sx={{ borderColor: BORDER, my: 1.5 }} />
-                      <Typography variant="caption" sx={{ color: TEXT_MUTED }}>
-                        {!esG && `Precio ${resultado.labelDesde}: ${resultado.precioPorGramo.toFixed(4)} ${resultado.monedaDesde}/g · `}
-                        Valor USD: ${resultado.valorUSD.toFixed(4)} · 1g {resultado.labelHacia} = ${resultado.precioBusd}/g
-                      </Typography>
-                    </>
-                  ) : (
-                    <>
-                      <Typography variant="body2" sx={{ color: TEXT_MUTED, mb: 0.5 }}>
-                        {desdeLabel} equivalen a
-                      </Typography>
-                      <Typography variant="h4" sx={{ color: ORANGE, fontWeight: 700 }}>
-                        {resultado.totalDestino.toFixed(4)} {resultado.monedaHacia}
-                      </Typography>
-                      <Typography variant="body2" sx={{ color: TEXT_MAIN, fontWeight: 600 }}>
-                        {resultado.flagHacia} {resultado.labelMonedaH}
-                      </Typography>
-                      <Divider sx={{ borderColor: BORDER, my: 1.5 }} />
-                      <Typography variant="caption" sx={{ color: TEXT_MUTED }}>
-                        {!esG && `Precio ${resultado.labelDesde}: ${resultado.precioPorGramo.toFixed(4)} ${resultado.monedaDesde}/g`}
-                      </Typography>
-                    </>
-                  );
-                })()}
+                    )}
+                  </Box>
+                )}
               </Box>
             )}
           </CardContent>
@@ -697,6 +613,25 @@ function Simulador() {
           sx={{ backgroundColor: "#1a2e1a", color: "#80ff9b", "& .MuiAlert-icon": { color: "#4caf50" } }}
         >
           {notif.mensaje}
+        </Alert>
+      </Snackbar>
+
+      {/* ── Notificación tesorería ───────────────────────────────────── */}
+      <Snackbar
+        open={snackTesoreria.open}
+        autoHideDuration={4000}
+        onClose={() => setSnackTesoreria((s) => ({ ...s, open: false }))}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          onClose={() => setSnackTesoreria((s) => ({ ...s, open: false }))}
+          severity={snackTesoreria.severity}
+          sx={snackTesoreria.severity === "success"
+            ? { backgroundColor: "#0e2a1a", color: "#80ff9b", "& .MuiAlert-icon": { color: "#4caf50" } }
+            : { backgroundColor: "#2a0e0e", color: "#ff6b6b", "& .MuiAlert-icon": { color: "#f44336" } }
+          }
+        >
+          {snackTesoreria.mensaje}
         </Alert>
       </Snackbar>
     </Box>
