@@ -18,6 +18,7 @@ import Chip from "@mui/material/Chip";
 
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import ShowChartIcon from "@mui/icons-material/ShowChart";
 
 import {
   LineChart,
@@ -177,6 +178,26 @@ function Panel() {
   return (
     <Box sx={{ backgroundColor: DARK_BG, minHeight: "100vh", py: 4 }}>
       <Container maxWidth="lg">
+
+        {/* ── Encabezado ───────────────────────────────────────────────── */}
+        <Box sx={{ mb: 4 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 0.5 }}>
+            <Box sx={{
+              width: 40, height: 40, borderRadius: "50%",
+              backgroundColor: "rgba(224,123,57,0.15)",
+              border: "1px solid rgba(224,123,57,0.3)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+            }}>
+              <ShowChartIcon sx={{ color: ORANGE, fontSize: 20 }} />
+            </Box>
+            <Typography variant="h5" sx={{ color: TEXT_MAIN, fontWeight: 700 }}>
+              Panel de Mercado
+            </Typography>
+          </Box>
+          <Typography variant="body2" sx={{ color: TEXT_MUTED, ml: 7 }}>
+            Cotizaciones en tiempo real y evolución histórica de metales preciosos
+          </Typography>
+        </Box>
 
         {/* ── Banner de bienvenida ─────────────────────────────────────── */}
         <Box

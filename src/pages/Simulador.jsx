@@ -275,12 +275,24 @@ function Simulador() {
       <Container maxWidth="lg">
 
         {/* ── Encabezado ───────────────────────────────────────────────── */}
-        <Typography variant="h5" sx={{ color: TEXT_MAIN, fontWeight: 700, mb: 0.5 }}>
-          Simulador de Intercambio
-        </Typography>
-        <Typography variant="body2" sx={{ color: TEXT_MUTED, mb: 4 }}>
-          Calcula equivalencias entre diferentes minerales y monedas, y configura alertas de precio
-        </Typography>
+        <Box sx={{ mb: 4 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 0.5 }}>
+            <Box sx={{
+              width: 40, height: 40, borderRadius: "50%",
+              backgroundColor: "rgba(224,123,57,0.15)",
+              border: "1px solid rgba(224,123,57,0.3)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+            }}>
+              <CalculateIcon sx={{ color: ORANGE, fontSize: 20 }} />
+            </Box>
+            <Typography variant="h5" sx={{ color: TEXT_MAIN, fontWeight: 700 }}>
+              Simulador de Intercambio
+            </Typography>
+          </Box>
+          <Typography variant="body2" sx={{ color: TEXT_MUTED, ml: 7 }}>
+            Calcula equivalencias entre diferentes minerales y monedas, y configura alertas de precio
+          </Typography>
+        </Box>
 
         {/* ── Calculadora ──────────────────────────────────────────────── */}
         <Card sx={{ backgroundColor: CARD_BG, border: `1px solid ${BORDER}`, borderRadius: 2, mb: 3 }}>

@@ -284,6 +284,22 @@ function ProductDialog({ producto, open, onClose }) {
                 </Typography>
               </>
             )}
+
+            <Box
+              sx={{
+                mt: 2,
+                p: 1.5,
+                borderRadius: 1.5,
+                bgcolor: "warning.main",
+                opacity: 0.85,
+                border: "1px solid",
+                borderColor: "warning.light",
+              }}
+            >
+              <Typography variant="caption" sx={{ color: "warning.contrastText", lineHeight: 1.5, display: "block" }}>
+                El precio mostrado es una estimación basada en el valor del material (precio spot × peso × prima). Las monedas y lingotes pueden tener un valor de coleccionista adicional no reflejado aquí.
+              </Typography>
+            </Box>
           </>
         )}
       </DialogContent>
@@ -335,12 +351,19 @@ function Catalogo() {
         {/* Cabecera */}
         <Box sx={{ mb: 4 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 0.5 }}>
-            <DiamondIcon sx={{ color: ORANGE, fontSize: 28 }} />
+            <Box sx={{
+              width: 40, height: 40, borderRadius: "50%",
+              backgroundColor: "rgba(224,123,57,0.15)",
+              border: "1px solid rgba(224,123,57,0.3)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+            }}>
+              <DiamondIcon sx={{ color: ORANGE, fontSize: 20 }} />
+            </Box>
             <Typography variant="h5" sx={{ fontWeight: 800, color: "text.primary" }}>
               Catálogo de Metales
             </Typography>
           </Box>
-          <Typography variant="body2" sx={{ color: "text.secondary" }}>
+          <Typography variant="body2" sx={{ color: "text.secondary", ml: 7 }}>
             Monedas, lingotes y barras de metales preciosos con precio estimado en tiempo real.
           </Typography>
         </Box>
