@@ -6,11 +6,10 @@
 import axios from "axios";
 
 /**
- * Instancia configurada de Axios para comunicación con el backend (LOCAL)
+ * Instancia configurada de Axios para comunicación con el backend
  */
 const api = axios.create({
-  // Configuración para trabajar en el propio PC
-  baseURL: "http://localhost:3000/api",
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:3000/api",
   timeout: 15000,
   headers: {
     "Content-Type": "application/json",
