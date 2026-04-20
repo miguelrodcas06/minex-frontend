@@ -1,3 +1,11 @@
+/**
+ * @fileoverview Catálogo de productos físicos de metales preciosos de MineX.
+ * Muestra monedas, lingotes, barras y rounds con filtros por tipo, mineral y exclusividad.
+ * Al hacer clic en un producto abre un diálogo de detalle con especificaciones técnicas
+ * (peso en oz, pureza, año, país, prima) y el precio de venta calculado en tiempo real.
+ * @module pages/Catalogo
+ */
+
 import { useState, useEffect, useCallback } from "react";
 import { useTheme } from "@mui/material/styles";
 import Box from "@mui/material/Box";

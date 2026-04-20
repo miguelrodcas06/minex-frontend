@@ -1,3 +1,11 @@
+/**
+ * @fileoverview Configuración del router principal de MineX con React Router v7.
+ * Define todas las rutas de la SPA: Panel (index), Simulador, Tesorería (protegida),
+ * Noticias, Catálogo y el fallback de error. Tesorería/Noticias/Catálogo se cargan
+ * de forma lazy para reducir el bundle inicial.
+ * @module App
+ */
+
 import { RouterProvider } from "react-router/dom";
 import { createBrowserRouter } from "react-router";
 

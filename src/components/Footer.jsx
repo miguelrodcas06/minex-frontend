@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Pie de página de MineX con tres columnas informativas:
+ * descripción de la plataforma, aviso legal y fuentes de datos.
+ * @module components/Footer
+ */
+
 import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
 import Divider from "@mui/material/Divider";
@@ -22,6 +28,10 @@ const COLUMNAS = [
   },
 ];
 
+/**
+ * Pie de página con información legal y de fuentes.
+ * @returns {JSX.Element}
+ */
 function Footer() {
   return (
     <Box

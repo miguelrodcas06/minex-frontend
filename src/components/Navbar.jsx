@@ -1,3 +1,13 @@
+/**
+ * @fileoverview Barra de navegación de MineX.
+ * En escritorio renderiza un Drawer lateral permanente con los enlaces de navegación,
+ * el toggle de tema claro/oscuro, estado del usuario y botones de login/logout.
+ * En móvil usa un AppBar fijo con un Drawer de superposición.
+ * Escucha los eventos personalizados `minex:login` y `minex:logout` para sincronizar
+ * el estado de autenticación con otros componentes.
+ * @module components/Navbar
+ */
+
 import * as React from "react";
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";

@@ -1,3 +1,11 @@
+/**
+ * @fileoverview Página de tesorería (portfolio) de MineX. Ruta protegida.
+ * Permite comprar gramos de minerales al precio spot actual, visualizar el portfolio
+ * con P&L calculado en tiempo real y vender posiciones parcial o totalmente.
+ * Muestra métricas resumen: total invertido, valor actual y saldo de ganancias/pérdidas.
+ * @module pages/Tesoreria
+ */
+
 import { useState, useEffect, useCallback } from "react";
 import { useTheme } from "@mui/material/styles";
 import Box from "@mui/material/Box";

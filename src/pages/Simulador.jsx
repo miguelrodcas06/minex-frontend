@@ -1,3 +1,11 @@
+/**
+ * @fileoverview Simulador de precios y gestor de alertas de MineX.
+ * Permite seleccionar un mineral y una divisa para consultar el precio spot actual,
+ * configurar alertas de precio (condición above/below con umbral en USD/g),
+ * activar/pausar y eliminar alertas existentes mediante llamadas al backend.
+ * @module pages/Simulador
+ */
+
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useTheme } from "@mui/material/styles";
 import Box from "@mui/material/Box";

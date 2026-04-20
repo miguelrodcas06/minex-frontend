@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: components/PerfilDialog.jsx</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: components/PerfilDialog.jsx</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * @fileoverview Diálogo de edición de perfil del usuario autenticado.
+ * Permite modificar username y email, y ofrece la opción de dar de baja la cuenta
+ * (baja lógica). Tras la baja limpia la sesión y redirige al inicio.
+ * @module components/PerfilDialog
+ */
+
+import React, { useState } from "react";
+import { useTheme } from "@mui/material/styles";
+import Dialog from "@mui/material/Dialog";
+import DialogContent from "@mui/material/DialogContent";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import TextField from "@mui/material/TextField";
+import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
+import Alert from "@mui/material/Alert";
+import CircularProgress from "@mui/material/CircularProgress";
+import Divider from "@mui/material/Divider";
+
+import CloseIcon from "@mui/icons-material/Close";
+import PersonIcon from "@mui/icons-material/Person";
+import EmailIcon from "@mui/icons-material/Email";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import WarningAmberIcon from "@mui/icons-material/WarningAmber";
+
+import api from "../api";
+
+const ORANGE = "#e07b39";
+
+/**
+ * Diálogo de perfil del usuario autenticado.
+ * @param {Object} props - open, onClose, usuario, onUsernameChange, onBaja
+ * @returns {JSX.Element}
+ */
+function PerfilDialog({ open, onClose, usuario, onUsernameChange, onBaja }) {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === "dark";
+
+  const inputSx = {
+    "&amp; .MuiOutlinedInput-root": {
+      color: "text.primary",
+      backgroundColor: theme.palette.background.default,
+      "&amp; fieldset": { borderColor: theme.palette.divider },
+      "&amp;:hover fieldset": { borderColor: "rgba(128,128,128,0.5)" },
+      "&amp;.Mui-focused fieldset": { borderColor: ORANGE },
+      "&amp;.Mui-disabled": {
+        "&amp; fieldset": { borderColor: theme.palette.divider },
+      },
+    },
+    "&amp; .MuiInputLabel-root": { color: theme.palette.text.secondary },
+    "&amp; .MuiInputLabel-root.Mui-focused": { color: ORANGE },
+    "&amp; .MuiInputBase-input.Mui-disabled": { WebkitTextFillColor: theme.palette.text.secondary },
+  };
+
+  const [username, setUsername]       = useState(usuario?.username ?? "");
+  const [loading, setLoading]         = useState(false);
+  const [error, setError]             = useState("");
+  const [success, setSuccess]         = useState("");
+  const [confirmBaja, setConfirmBaja] = useState(false);
+  const [loadingBaja, setLoadingBaja] = useState(false);
+
+  const handleClose = () => {
+    setError("");
+    setSuccess("");
+    setConfirmBaja(false);
+    onClose();
+  };
+
+  const handleDarDeBaja = async () => {
+    setLoadingBaja(true);
+    try {
+      await api.put("/usuarios/baja");
+      onClose();
+      onBaja?.();
+    } catch (err) {
+      setError(err.mensaje ?? "No se pudo desactivar la cuenta.");
+      setConfirmBaja(false);
+    } finally {
+      setLoadingBaja(false);
+    }
+  };
+
+  const handleGuardar = async (e) => {
+    e.preventDefault();
+    if (!username.trim()) {
+      setError("El nombre de usuario no puede estar vacío.");
+      return;
+    }
+    if (username.trim() === usuario?.username) {
+      setError("Escribe un nombre diferente al actual.");
+      return;
+    }
+    setLoading(true);
+    setError("");
+    setSuccess("");
+    try {
+      const res = await api.put("/usuarios/perfil", {
+        username: username.trim(),
+        email: usuario?.email,
+      });
+      setSuccess("Nombre actualizado correctamente.");
+      onUsernameChange(res.datos.username ?? username.trim());
+    } catch (err) {
+      setError(err.mensaje ?? "No se pudo actualizar el perfil.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    &lt;Dialog
+      open={open}
+      onClose={handleClose}
+      maxWidth="xs"
+      fullWidth
+      slotProps={{
+        paper: {
+          sx: {
+            bgcolor: "background.paper",
+            backgroundImage: "none",
+            border: "1px solid",
+            borderColor: "divider",
+            borderRadius: 3,
+          },
+        },
+      }}
+    >
+      &lt;DialogContent sx={{ p: { xs: 3, sm: 4 } }}>
+
+        {/* Botón cerrar */}
+        &lt;IconButton
+          onClick={handleClose}
+          size="small"
+          sx={{
+            position: "absolute", top: 12, right: 12,
+            color: "text.secondary",
+            "&amp;:hover": { color: "text.primary" },
+          }}
+        >
+          &lt;CloseIcon fontSize="small" />
+        &lt;/IconButton>
+
+        {/* Título */}
+        &lt;Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 3 }}>
+          &lt;Box sx={{
+            backgroundColor: "rgba(224,123,57,0.12)",
+            borderRadius: "50%", width: 40, height: 40,
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            &lt;PersonIcon sx={{ color: ORANGE }} />
+          &lt;/Box>
+          &lt;Box>
+            &lt;Typography variant="h6" sx={{ color: "text.primary", fontWeight: 700, lineHeight: 1 }}>
+              Mi perfil
+            &lt;/Typography>
+            &lt;Typography variant="caption" sx={{ color: "text.secondary" }}>
+              Gestiona tu información de cuenta
+            &lt;/Typography>
+          &lt;/Box>
+        &lt;/Box>
+
+        &lt;Divider sx={{ borderColor: "divider", mb: 3 }} />
+
+        {/* Email (solo lectura) */}
+        &lt;Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
+          &lt;EmailIcon sx={{ fontSize: 15, color: "text.secondary" }} />
+          &lt;Typography variant="caption" sx={{ color: "text.secondary" }}>
+            Correo electrónico
+          &lt;/Typography>
+        &lt;/Box>
+        &lt;TextField
+          value={usuario?.email ?? ""}
+          disabled
+          fullWidth
+          size="small"
+          sx={{ ...inputSx, mb: 3 }}
+          helperText={
+            &lt;Typography variant="caption" sx={{ color: "text.secondary", opacity: 0.6 }}>
+              El email no se puede modificar
+            &lt;/Typography>
+          }
+        />
+
+        {/* Username (editable) */}
+        &lt;Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
+          &lt;EditIcon sx={{ fontSize: 15, color: "text.secondary" }} />
+          &lt;Typography variant="caption" sx={{ color: "text.secondary" }}>
+            Nombre de usuario
+          &lt;/Typography>
+        &lt;/Box>
+
+        {error &amp;&amp; (
+          &lt;Alert severity="error" sx={isDark
+            ? { mb: 2, backgroundColor: "#2a1010", color: "#ff8080", "&amp; .MuiAlert-icon": { color: "#ff6b6b" } }
+            : { mb: 2 }}>
+            {error}
+          &lt;/Alert>
+        )}
+        {success &amp;&amp; (
+          &lt;Alert severity="success" sx={isDark
+            ? { mb: 2, backgroundColor: "#0e2a1a", color: "#80ff9b", "&amp; .MuiAlert-icon": { color: "#4caf50" } }
+            : { mb: 2 }}>
+            {success}
+          &lt;/Alert>
+        )}
+
+        &lt;Box component="form" onSubmit={handleGuardar}>
+          &lt;TextField
+            value={username}
+            onChange={(e) => { setUsername(e.target.value); setError(""); setSuccess(""); }}
+            fullWidth size="small"
+            placeholder="Nuevo nombre de usuario"
+            sx={{ ...inputSx, mb: 2.5 }}
+            autoComplete="username"
+          />
+          &lt;Button
+            type="submit"
+            fullWidth
+            disabled={loading}
+            sx={{
+              backgroundColor: ORANGE, color: "white",
+              textTransform: "none", fontWeight: 700, py: 1.2, boxShadow: "none",
+              "&amp;:hover": { backgroundColor: "#c96a2a", boxShadow: "none" },
+              "&amp;.Mui-disabled": { backgroundColor: "rgba(224,123,57,0.4)", color: "rgba(255,255,255,0.5)" },
+            }}
+          >
+            {loading ? &lt;CircularProgress size={20} sx={{ color: "white" }} /> : "Guardar cambios"}
+          &lt;/Button>
+        &lt;/Box>
+
+        {/* ── Zona de baja ── */}
+        &lt;Divider sx={{ borderColor: "divider", mt: 3, mb: 2 }} />
+
+        {!confirmBaja ? (
+          &lt;Button
+            onClick={() => setConfirmBaja(true)}
+            startIcon={&lt;DeleteOutlineIcon />}
+            fullWidth
+            size="small"
+            sx={{
+              textTransform: "none",
+              color: "text.secondary",
+              justifyContent: "flex-start",
+              px: 1,
+              "&amp;:hover": { color: "#f44336", bgcolor: "rgba(244,67,54,0.06)" },
+            }}
+          >
+            Dar de baja mi cuenta
+          &lt;/Button>
+        ) : (
+          &lt;Box sx={{
+            p: 2, borderRadius: 2,
+            bgcolor: isDark ? "rgba(244,67,54,0.08)" : "rgba(244,67,54,0.05)",
+            border: "1px solid rgba(244,67,54,0.25)",
+          }}>
+            &lt;Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+              &lt;WarningAmberIcon sx={{ fontSize: 18, color: "#f44336" }} />
+              &lt;Typography variant="body2" sx={{ color: "text.primary", fontWeight: 600 }}>
+                ¿Seguro que quieres dar de baja tu cuenta?
+              &lt;/Typography>
+            &lt;/Box>
+            &lt;Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 2 }}>
+              Tu cuenta quedará desactivada. Podrás reactivarla en cualquier momento iniciando sesión.
+            &lt;/Typography>
+            &lt;Box sx={{ display: "flex", gap: 1 }}>
+              &lt;Button
+                onClick={() => setConfirmBaja(false)}
+                size="small"
+                variant="outlined"
+                sx={{
+                  flex: 1, textTransform: "none",
+                  color: "text.secondary", borderColor: "divider",
+                  "&amp;:hover": { borderColor: "text.secondary" },
+                }}
+              >
+                Cancelar
+              &lt;/Button>
+              &lt;Button
+                onClick={handleDarDeBaja}
+                size="small"
+                disabled={loadingBaja}
+                sx={{
+                  flex: 1, textTransform: "none",
+                  backgroundColor: "#f44336", color: "white",
+                  "&amp;:hover": { backgroundColor: "#d32f2f" },
+                  "&amp;.Mui-disabled": { backgroundColor: "rgba(244,67,54,0.4)", color: "rgba(255,255,255,0.5)" },
+                }}
+              >
+                {loadingBaja ? &lt;CircularProgress size={16} sx={{ color: "white" }} /> : "Confirmar baja"}
+              &lt;/Button>
+            &lt;/Box>
+          &lt;/Box>
+        )}
+
+      &lt;/DialogContent>
+    &lt;/Dialog>
+  );
+}
+
+export default PerfilDialog;
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-App.html">App</a></li><li><a href="module-api.html">api</a></li><li><a href="module-components_Footer.html">components/Footer</a></li><li><a href="module-components_LoginDialog.html">components/LoginDialog</a></li><li><a href="module-components_Navbar.html">components/Navbar</a></li><li><a href="module-components_PerfilDialog.html">components/PerfilDialog</a></li><li><a href="module-components_ProtectedRoute.html">components/ProtectedRoute</a></li><li><a href="module-context_ColorModeContext.html">context/ColorModeContext</a></li><li><a href="module-main.html">main</a></li><li><a href="module-pages_Catalogo.html">pages/Catalogo</a></li><li><a href="module-pages_ErrorPage.html">pages/ErrorPage</a></li><li><a href="module-pages_Home.html">pages/Home</a></li><li><a href="module-pages_Noticias.html">pages/Noticias</a></li><li><a href="module-pages_Panel.html">pages/Panel</a></li><li><a href="module-pages_Simulador.html">pages/Simulador</a></li><li><a href="module-pages_Tesoreria.html">pages/Tesoreria</a></li></ul><h3>Global</h3><ul><li><a href="global.html#generatePDF">generatePDF</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Mon Apr 20 2026 10:22:07 GMT+0200 (hora de verano de Europa central)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

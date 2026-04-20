@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: pages/ErrorPage.jsx</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: pages/ErrorPage.jsx</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * @fileoverview Página de error polivalente para MineX.
+ * Detecta el tipo de error (404, 503, red, genérico) y muestra un mensaje
+ * contextualizado con icono, código HTTP y botones de "Reintentar" / "Ir al inicio".
+ * En entorno de desarrollo (`import.meta.env.DEV`) también muestra el stack del error.
+ * @module pages/ErrorPage
+ */
+
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import Button from "@mui/material/Button";
+import Container from "@mui/material/Container";
+import { useTheme } from "@mui/material/styles";
+
+import WifiOffIcon from "@mui/icons-material/WifiOff";
+import StorageIcon from "@mui/icons-material/Storage";
+import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
+import RefreshIcon from "@mui/icons-material/Refresh";
+import HomeIcon from "@mui/icons-material/Home";
+
+import { useNavigate, useRouteError } from "react-router";
+
+const ORANGE = "#e07b39";
+
+const ERROR_TYPES = {
+  network: {
+    icon: &lt;WifiOffIcon sx={{ fontSize: 80, color: ORANGE, opacity: 0.85 }} />,
+    title: "Sin conexión",
+    description: "No se puede conectar con el servidor. Comprueba que el backend está en marcha o revisa tu conexión a Internet.",
+    code: null,
+  },
+  database: {
+    icon: &lt;StorageIcon sx={{ fontSize: 80, color: ORANGE, opacity: 0.85 }} />,
+    title: "Base de datos no disponible",
+    description: "El servidor está activo pero no puede acceder a la base de datos. Asegúrate de que phpMyAdmin y el contenedor Docker están en ejecución.",
+    code: 503,
+  },
+  notFound: {
+    icon: &lt;ErrorOutlineIcon sx={{ fontSize: 80, color: ORANGE, opacity: 0.85 }} />,
+    title: "Página no encontrada",
+    description: "La página que buscas no existe o ha sido movida.",
+    code: 404,
+  },
+  generic: {
+    icon: &lt;ErrorOutlineIcon sx={{ fontSize: 80, color: ORANGE, opacity: 0.85 }} />,
+    title: "Algo ha ido mal",
+    description: "Ha ocurrido un error inesperado. Puedes intentar recargar la página.",
+    code: null,
+  },
+};
+
+/**
+ * Mapea un objeto de error a uno de los tipos predefinidos en `ERROR_TYPES`.
+ * @param {object|null} error - Error de ruta (React Router) o de Axios.
+ * @returns {Object} Objeto con icon, title, description y code.
+ */
+function resolveErrorType(error) {
+  if (!error) return ERROR_TYPES.generic;
+  const status = error?.status ?? error?.response?.status;
+  if (status === 404) return ERROR_TYPES.notFound;
+  if (status === 503) return ERROR_TYPES.database;
+  if (
+    error?.code === "ERR_NETWORK" ||
+    error?.message === "Network Error" ||
+    (error?.name === "AxiosError" &amp;&amp; !error?.response)
+  ) return ERROR_TYPES.network;
+  return ERROR_TYPES.generic;
+}
+
+/**
+ * Página de error con soporte para errores de ruta (React Router) y errores prop.
+ * @param {Object} [props] - Error opcional pasado como prop (p.ej. desde un boundary).
+ * @returns {JSX.Element}
+ */
+function ErrorPage({ error: propError }) {
+  const navigate   = useNavigate();
+  const routeError = useRouteError();
+  const theme      = useTheme();
+  const isDark     = theme.palette.mode === "dark";
+
+  const error = propError ?? routeError;
+  const { icon, title, description, code } = resolveErrorType(error);
+
+  return (
+    &lt;Box
+      sx={{
+        minHeight: "100vh",
+        bgcolor: "background.default",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      &lt;Container maxWidth="sm">
+        &lt;Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            textAlign: "center",
+            gap: 3,
+            p: { xs: 3, sm: 5 },
+            borderRadius: 3,
+            bgcolor: "background.paper",
+            border: "1px solid",
+            borderColor: "divider",
+          }}
+        >
+          {icon}
+
+          {code &amp;&amp; (
+            &lt;Typography
+              variant="h1"
+              sx={{ fontSize: "5rem", fontWeight: 800, color: ORANGE, lineHeight: 1, opacity: 0.3, mt: -2 }}
+            >
+              {code}
+            &lt;/Typography>
+          )}
+
+          &lt;Typography variant="h5" sx={{ color: "text.primary", fontWeight: 700 }}>
+            {title}
+          &lt;/Typography>
+
+          &lt;Typography variant="body2" sx={{ color: "text.secondary", lineHeight: 1.7, maxWidth: 380 }}>
+            {description}
+          &lt;/Typography>
+
+          {import.meta.env.DEV &amp;&amp; error?.message &amp;&amp; (
+            &lt;Box
+              sx={{
+                bgcolor: isDark ? "rgba(0,0,0,0.4)" : "rgba(0,0,0,0.05)",
+                border: "1px solid",
+                borderColor: "divider",
+                borderRadius: 1,
+                px: 2, py: 1,
+                width: "100%",
+              }}
+            >
+              &lt;Typography
+                variant="caption"
+                sx={{ color: "text.secondary", fontFamily: "monospace", wordBreak: "break-all", opacity: 0.7 }}
+              >
+                {error.message}
+              &lt;/Typography>
+            &lt;/Box>
+          )}
+
+          &lt;Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", justifyContent: "center" }}>
+            &lt;Button
+              variant="contained"
+              startIcon={&lt;RefreshIcon />}
+              onClick={() => window.location.reload()}
+              sx={{
+                backgroundColor: ORANGE, color: "white",
+                textTransform: "none", fontWeight: 600, boxShadow: "none",
+                "&amp;:hover": { backgroundColor: "#c96a2a", boxShadow: "none" },
+              }}
+            >
+              Reintentar
+            &lt;/Button>
+            &lt;Button
+              variant="outlined"
+              startIcon={&lt;HomeIcon />}
+              onClick={() => navigate("/")}
+              sx={{
+                color: "text.secondary",
+                borderColor: "divider",
+                textTransform: "none",
+                "&amp;:hover": { borderColor: "text.secondary", bgcolor: "action.hover" },
+              }}
+            >
+              Ir al inicio
+            &lt;/Button>
+          &lt;/Box>
+        &lt;/Box>
+      &lt;/Container>
+    &lt;/Box>
+  );
+}
+
+export default ErrorPage;
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-App.html">App</a></li><li><a href="module-api.html">api</a></li><li><a href="module-components_Footer.html">components/Footer</a></li><li><a href="module-components_LoginDialog.html">components/LoginDialog</a></li><li><a href="module-components_Navbar.html">components/Navbar</a></li><li><a href="module-components_PerfilDialog.html">components/PerfilDialog</a></li><li><a href="module-components_ProtectedRoute.html">components/ProtectedRoute</a></li><li><a href="module-context_ColorModeContext.html">context/ColorModeContext</a></li><li><a href="module-main.html">main</a></li><li><a href="module-pages_Catalogo.html">pages/Catalogo</a></li><li><a href="module-pages_ErrorPage.html">pages/ErrorPage</a></li><li><a href="module-pages_Home.html">pages/Home</a></li><li><a href="module-pages_Noticias.html">pages/Noticias</a></li><li><a href="module-pages_Panel.html">pages/Panel</a></li><li><a href="module-pages_Simulador.html">pages/Simulador</a></li><li><a href="module-pages_Tesoreria.html">pages/Tesoreria</a></li></ul><h3>Global</h3><ul><li><a href="global.html#generatePDF">generatePDF</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Mon Apr 20 2026 10:22:07 GMT+0200 (hora de verano de Europa central)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

@@ -1,3 +1,11 @@
+/**
+ * @fileoverview Diálogo modal de autenticación de MineX.
+ * Permite al usuario alternar entre las pestañas de "Iniciar Sesión" y "Registrarse".
+ * Tras un login exitoso almacena el token en `sessionStorage`, emite el evento
+ * `minex:login` y llama al callback `onLoginSuccess` del padre.
+ * @module components/LoginDialog
+ */
+
 import React, { useState } from "react";
 import { useTheme } from "@mui/material/styles";
 import Dialog from "@mui/material/Dialog";
@@ -17,6 +25,11 @@ import api from "../api";
 
 const ORANGE = "#e07b39";
 
+/**
+ * Modal de login / registro.
+ * @param {Object} props - open, onClose, onLoginSuccess
+ * @returns {JSX.Element}
+ */
 function LoginDialog({ open, onClose, onLoginSuccess }) {
   const theme = useTheme();
 

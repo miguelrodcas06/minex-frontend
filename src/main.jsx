@@ -1,3 +1,10 @@
+/**
+ * @fileoverview Punto de entrada de la aplicación React MineX.
+ * Envuelve la app en StrictMode y en el proveedor de tema (ColorModeProvider)
+ * antes de montar el árbol de componentes en el elemento `#root` del DOM.
+ * @module main
+ */
+
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 

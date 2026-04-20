@@ -1,3 +1,11 @@
+/**
+ * @fileoverview Panel de control principal de MineX.
+ * Muestra el precio spot actual del mineral seleccionado, una gráfica de histórico
+ * de precios con Recharts (períodos 30d/12m/5y) y tarjetas de cotización en tiempo real.
+ * Los datos se obtienen del backend en `/api/minerales`.
+ * @module pages/Panel
+ */
+
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useTheme } from "@mui/material/styles";
 import Box from "@mui/material/Box";

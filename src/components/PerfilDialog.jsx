@@ -1,3 +1,10 @@
+/**
+ * @fileoverview Diálogo de edición de perfil del usuario autenticado.
+ * Permite modificar username y email, y ofrece la opción de dar de baja la cuenta
+ * (baja lógica). Tras la baja limpia la sesión y redirige al inicio.
+ * @module components/PerfilDialog
+ */
+
 import React, { useState } from "react";
 import { useTheme } from "@mui/material/styles";
 import Dialog from "@mui/material/Dialog";
@@ -22,6 +29,11 @@ import api from "../api";
 
 const ORANGE = "#e07b39";
 
+/**
+ * Diálogo de perfil del usuario autenticado.
+ * @param {Object} props - open, onClose, usuario, onUsernameChange, onBaja
+ * @returns {JSX.Element}
+ */
 function PerfilDialog({ open, onClose, usuario, onUsernameChange, onBaja }) {
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";

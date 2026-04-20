@@ -1,3 +1,11 @@
+/**
+ * @fileoverview Página de error polivalente para MineX.
+ * Detecta el tipo de error (404, 503, red, genérico) y muestra un mensaje
+ * contextualizado con icono, código HTTP y botones de "Reintentar" / "Ir al inicio".
+ * En entorno de desarrollo (`import.meta.env.DEV`) también muestra el stack del error.
+ * @module pages/ErrorPage
+ */
+
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
@@ -41,6 +49,11 @@ const ERROR_TYPES = {
   },
 };
 
+/**
+ * Mapea un objeto de error a uno de los tipos predefinidos en `ERROR_TYPES`.
+ * @param {object|null} error - Error de ruta (React Router) o de Axios.
+ * @returns {Object} Objeto con icon, title, description y code.
+ */
 function resolveErrorType(error) {
   if (!error) return ERROR_TYPES.generic;
   const status = error?.status ?? error?.response?.status;
@@ -54,6 +67,11 @@ function resolveErrorType(error) {
   return ERROR_TYPES.generic;
 }
 
+/**
+ * Página de error con soporte para errores de ruta (React Router) y errores prop.
+ * @param {Object} [props] - Error opcional pasado como prop (p.ej. desde un boundary).
+ * @returns {JSX.Element}
+ */
 function ErrorPage({ error: propError }) {
   const navigate   = useNavigate();
   const routeError = useRouteError();

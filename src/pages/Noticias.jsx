@@ -1,3 +1,11 @@
+/**
+ * @fileoverview Página de noticias del mercado de metales preciosos de MineX.
+ * Recupera artículos de Yahoo Finance a través del backend `/api/minerales/noticias`.
+ * Incluye botones de selección rápida por tema, buscador libre y tarjetas de noticia
+ * con imagen, fuente, fecha y enlace externo.
+ * @module pages/Noticias
+ */
+
 import { useState, useEffect, useCallback } from "react";
 import { useTheme } from "@mui/material/styles";
 import Box from "@mui/material/Box";

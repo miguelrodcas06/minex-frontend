@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: pages/Noticias.jsx</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: pages/Noticias.jsx</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * @fileoverview Página de noticias del mercado de metales preciosos de MineX.
+ * Recupera artículos de Yahoo Finance a través del backend `/api/minerales/noticias`.
+ * Incluye botones de selección rápida por tema, buscador libre y tarjetas de noticia
+ * con imagen, fuente, fecha y enlace externo.
+ * @module pages/Noticias
+ */
+
+import { useState, useEffect, useCallback } from "react";
+import { useTheme } from "@mui/material/styles";
+import Box from "@mui/material/Box";
+import Container from "@mui/material/Container";
+import Typography from "@mui/material/Typography";
+import Grid from "@mui/material/Grid";
+import Card from "@mui/material/Card";
+import CardActionArea from "@mui/material/CardActionArea";
+import CardContent from "@mui/material/CardContent";
+import CardMedia from "@mui/material/CardMedia";
+import TextField from "@mui/material/TextField";
+import InputAdornment from "@mui/material/InputAdornment";
+import IconButton from "@mui/material/IconButton";
+import Chip from "@mui/material/Chip";
+import CircularProgress from "@mui/material/CircularProgress";
+import Button from "@mui/material/Button";
+
+import ArticleIcon from "@mui/icons-material/Article";
+import SearchIcon from "@mui/icons-material/Search";
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
+import RefreshIcon from "@mui/icons-material/Refresh";
+import NewspaperIcon from "@mui/icons-material/Newspaper";
+
+import api from "../api";
+
+const ORANGE = "#e07b39";
+
+const TEMAS_RAPIDOS = [
+  { label: "Mercado del Oro",    tema: "gold market"      },
+  { label: "Plata",              tema: "silver market"    },
+  { label: "Platino",            tema: "platinum market"  },
+  { label: "Cobre",              tema: "copper market"    },
+  { label: "Metales Preciosos",  tema: "precious metals"  },
+  { label: "Minería",            tema: "mining industry"  },
+];
+
+function formatFecha(fechaStr) {
+  try {
+    return new Date(fechaStr).toLocaleDateString("es-ES", {
+      day: "numeric", month: "long", year: "numeric",
+    });
+  } catch {
+    return fechaStr;
+  }
+}
+
+function Noticias() {
+  const theme    = useTheme();
+  const CARD_BG  = theme.palette.background.paper;
+  const BORDER   = theme.palette.divider;
+  const TEXT_MUTED = theme.palette.text.secondary;
+
+  const [noticias,  setNoticias]  = useState([]);
+  const [loading,   setLoading]   = useState(true);
+  const [error,     setError]     = useState(null);
+  const [busqueda,  setBusqueda]  = useState("gold market");
+  const [inputVal,  setInputVal]  = useState("");
+  const [temaActivo, setTemaActivo] = useState("gold market");
+
+  const fetchNoticias = useCallback(async (tema) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await api.get(`/minerales/noticias?tema=${encodeURIComponent(tema)}`);
+      setNoticias(res.datos ?? []);
+    } catch (e) {
+      setError(e.mensaje ?? "No se pudieron cargar las noticias.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchNoticias(busqueda); }, [busqueda, fetchNoticias]);
+
+  const handleBuscar = () => {
+    const q = inputVal.trim();
+    if (!q) return;
+    setBusqueda(q);
+    setTemaActivo(q);
+    setInputVal("");
+  };
+
+  const handleTemaRapido = (tema) => {
+    setBusqueda(tema);
+    setTemaActivo(tema);
+    setInputVal("");
+  };
+
+  return (
+    &lt;Box sx={{ bgcolor: "background.default", minHeight: "100vh", py: 4 }}>
+      &lt;Container maxWidth="lg">
+
+        {/* ── Header ── */}
+        &lt;Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1 }}>
+          &lt;Box sx={{
+            width: 40, height: 40, borderRadius: "50%",
+            backgroundColor: "rgba(224,123,57,0.15)",
+            border: "1px solid rgba(224,123,57,0.3)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            &lt;ArticleIcon sx={{ color: ORANGE, fontSize: 20 }} />
+          &lt;/Box>
+          &lt;Typography variant="h5" sx={{ color: "text.primary", fontWeight: 700 }}>
+            Noticias del Mercado
+          &lt;/Typography>
+        &lt;/Box>
+        &lt;Typography variant="body2" sx={{ color: "text.secondary", mb: 3, ml: 7 }}>
+          Últimas noticias sobre metales preciosos y mercados de materias primas
+        &lt;/Typography>
+
+        {/* ── Buscador ── */}
+        &lt;Box sx={{
+          bgcolor: CARD_BG,
+          border: "1px solid", borderColor: BORDER,
+          borderRadius: 2, p: 2.5, mb: 3,
+        }}>
+          &lt;TextField
+            fullWidth
+            size="small"
+            placeholder="Buscar noticias... (ej: platinum ETF, copper demand)"
+            value={inputVal}
+            onChange={(e) => setInputVal(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" &amp;&amp; handleBuscar()}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  &lt;InputAdornment position="start">
+                    &lt;SearchIcon sx={{ color: TEXT_MUTED, fontSize: 20 }} />
+                  &lt;/InputAdornment>
+                ),
+                endAdornment: (
+                  &lt;InputAdornment position="end">
+                    &lt;IconButton size="small" onClick={handleBuscar} disabled={!inputVal.trim()}>
+                      &lt;SearchIcon sx={{ color: ORANGE, fontSize: 18 }} />
+                    &lt;/IconButton>
+                  &lt;/InputAdornment>
+                ),
+              },
+            }}
+            sx={{
+              mb: 2,
+              "&amp; .MuiOutlinedInput-root": {
+                color: "text.primary",
+                bgcolor: "background.default",
+                "&amp; fieldset": { borderColor: BORDER },
+                "&amp;:hover fieldset": { borderColor: "rgba(128,128,128,0.5)" },
+                "&amp;.Mui-focused fieldset": { borderColor: ORANGE },
+              },
+            }}
+          />
+
+          {/* Temas rápidos */}
+          &lt;Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+            {TEMAS_RAPIDOS.map(({ label, tema }) => (
+              &lt;Chip
+                key={tema}
+                label={label}
+                size="small"
+                onClick={() => handleTemaRapido(tema)}
+                sx={{
+                  cursor: "pointer",
+                  backgroundColor: temaActivo === tema
+                    ? "rgba(224,123,57,0.15)"
+                    : "transparent",
+                  border: "1px solid",
+                  borderColor: temaActivo === tema ? ORANGE : BORDER,
+                  color: temaActivo === tema ? ORANGE : TEXT_MUTED,
+                  fontWeight: temaActivo === tema ? 600 : 400,
+                  "&amp;:hover": { borderColor: ORANGE, color: ORANGE },
+                }}
+              />
+            ))}
+          &lt;/Box>
+        &lt;/Box>
+
+        {/* ── Estado: cargando / error / vacío ── */}
+        {loading &amp;&amp; (
+          &lt;Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
+            &lt;CircularProgress sx={{ color: ORANGE }} />
+          &lt;/Box>
+        )}
+
+        {!loading &amp;&amp; error &amp;&amp; (
+          &lt;Box sx={{
+            textAlign: "center", py: 6,
+            bgcolor: CARD_BG,
+            border: "1px solid", borderColor: BORDER,
+            borderRadius: 2,
+          }}>
+            &lt;Typography variant="body1" sx={{ color: "#f44336", mb: 2 }}>{error}&lt;/Typography>
+            &lt;Button
+              onClick={() => fetchNoticias(busqueda)}
+              startIcon={&lt;RefreshIcon />}
+              size="small"
+              sx={{ color: ORANGE, textTransform: "none" }}
+            >
+              Reintentar
+            &lt;/Button>
+          &lt;/Box>
+        )}
+
+        {!loading &amp;&amp; !error &amp;&amp; noticias.length === 0 &amp;&amp; (
+          &lt;Box sx={{ textAlign: "center", py: 8 }}>
+            &lt;NewspaperIcon sx={{ fontSize: 64, color: BORDER, mb: 2 }} />
+            &lt;Typography variant="body1" sx={{ color: TEXT_MUTED }}>
+              No se encontraron noticias para "{busqueda}"
+            &lt;/Typography>
+          &lt;/Box>
+        )}
+
+        {/* ── Grid de noticias ── */}
+        {!loading &amp;&amp; !error &amp;&amp; noticias.length > 0 &amp;&amp; (
+          &lt;>
+            &lt;Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
+              &lt;Typography variant="body2" sx={{ color: TEXT_MUTED }}>
+                {noticias.length} {noticias.length === 1 ? "noticia" : "noticias"} sobre{" "}
+                &lt;Typography component="span" variant="body2" sx={{ color: ORANGE, fontWeight: 600 }}>
+                  {temaActivo}
+                &lt;/Typography>
+              &lt;/Typography>
+              &lt;IconButton
+                size="small"
+                onClick={() => fetchNoticias(busqueda)}
+                sx={{ color: TEXT_MUTED, "&amp;:hover": { color: ORANGE } }}
+                title="Actualizar"
+              >
+                &lt;RefreshIcon fontSize="small" />
+              &lt;/IconButton>
+            &lt;/Box>
+
+            &lt;Grid container spacing={2.5}>
+              {noticias.map((noticia) => (
+                &lt;Grid key={noticia.id} size={{ xs: 12, sm: 6, md: 4 }} sx={{ display: "flex" }}>
+                  &lt;Card
+                    sx={{
+                      flex: 1,
+                      bgcolor: CARD_BG,
+                      border: "1px solid", borderColor: BORDER,
+                      borderRadius: 2,
+                      display: "flex",
+                      flexDirection: "column",
+                      transition: "border-color 0.2s, box-shadow 0.2s",
+                      "&amp;:hover": {
+                        borderColor: ORANGE,
+                        boxShadow: `0 0 0 1px ${ORANGE}44`,
+                      },
+                    }}
+                  >
+                    &lt;CardActionArea
+                      component="a"
+                      href={noticia.enlace}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      sx={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "stretch" }}
+                    >
+                      {/* Imagen */}
+                      {noticia.imagen ? (
+                        &lt;CardMedia
+                          component="img"
+                          image={noticia.imagen}
+                          alt={noticia.titulo}
+                          sx={{ height: 160, objectFit: "cover" }}
+                        />
+                      ) : (
+                        &lt;Box sx={{
+                          height: 120,
+                          bgcolor: "rgba(224,123,57,0.06)",
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          borderBottom: "1px solid", borderColor: BORDER,
+                        }}>
+                          &lt;NewspaperIcon sx={{ fontSize: 40, color: `${ORANGE}66` }} />
+                        &lt;/Box>
+                      )}
+
+                      &lt;CardContent sx={{ flex: 1, display: "flex", flexDirection: "column", p: 2 }}>
+                        {/* Fuente + fecha */}
+                        &lt;Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
+                          &lt;Chip
+                            label={noticia.fuente}
+                            size="small"
+                            sx={{
+                              height: 20, fontSize: "0.68rem",
+                              bgcolor: "rgba(224,123,57,0.1)",
+                              color: ORANGE,
+                              fontWeight: 600,
+                              maxWidth: 140,
+                            }}
+                          />
+                          &lt;Typography variant="caption" sx={{ color: TEXT_MUTED, flexShrink: 0, ml: 1 }}>
+                            {formatFecha(noticia.fecha)}
+                          &lt;/Typography>
+                        &lt;/Box>
+
+                        {/* Título */}
+                        &lt;Typography
+                          variant="body2"
+                          sx={{
+                            color: "text.primary",
+                            fontWeight: 600,
+                            lineHeight: 1.5,
+                            flex: 1,
+                            display: "-webkit-box",
+                            WebkitLineClamp: 4,
+                            WebkitBoxOrient: "vertical",
+                            overflow: "hidden",
+                          }}
+                        >
+                          {noticia.titulo}
+                        &lt;/Typography>
+
+                        {/* Leer más */}
+                        &lt;Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 1.5 }}>
+                          &lt;Typography variant="caption" sx={{ color: ORANGE, fontWeight: 600 }}>
+                            Leer más
+                          &lt;/Typography>
+                          &lt;OpenInNewIcon sx={{ fontSize: 12, color: ORANGE }} />
+                        &lt;/Box>
+                      &lt;/CardContent>
+                    &lt;/CardActionArea>
+                  &lt;/Card>
+                &lt;/Grid>
+              ))}
+            &lt;/Grid>
+          &lt;/>
+        )}
+
+        {/* ── Aviso ── */}
+        {!loading &amp;&amp; !error &amp;&amp; noticias.length > 0 &amp;&amp; (
+          &lt;Box sx={{
+            mt: 4, p: 2,
+            bgcolor: "rgba(224,123,57,0.06)",
+            border: "1px solid rgba(224,123,57,0.2)",
+            borderRadius: 2,
+            display: "flex", alignItems: "flex-start", gap: 1.5,
+          }}>
+            &lt;ArticleIcon sx={{ color: ORANGE, fontSize: 18, flexShrink: 0, mt: 0.2 }} />
+            &lt;Typography variant="caption" sx={{ color: TEXT_MUTED, lineHeight: 1.7 }}>
+              Las noticias son proporcionadas por Yahoo Finance y fuentes externas. MineX no es responsable
+              del contenido de terceros. Esta información es exclusivamente educativa e informativa.
+            &lt;/Typography>
+          &lt;/Box>
+        )}
+
+      &lt;/Container>
+    &lt;/Box>
+  );
+}
+
+export default Noticias;
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-App.html">App</a></li><li><a href="module-api.html">api</a></li><li><a href="module-components_Footer.html">components/Footer</a></li><li><a href="module-components_LoginDialog.html">components/LoginDialog</a></li><li><a href="module-components_Navbar.html">components/Navbar</a></li><li><a href="module-components_PerfilDialog.html">components/PerfilDialog</a></li><li><a href="module-components_ProtectedRoute.html">components/ProtectedRoute</a></li><li><a href="module-context_ColorModeContext.html">context/ColorModeContext</a></li><li><a href="module-main.html">main</a></li><li><a href="module-pages_Catalogo.html">pages/Catalogo</a></li><li><a href="module-pages_ErrorPage.html">pages/ErrorPage</a></li><li><a href="module-pages_Home.html">pages/Home</a></li><li><a href="module-pages_Noticias.html">pages/Noticias</a></li><li><a href="module-pages_Panel.html">pages/Panel</a></li><li><a href="module-pages_Simulador.html">pages/Simulador</a></li><li><a href="module-pages_Tesoreria.html">pages/Tesoreria</a></li></ul><h3>Global</h3><ul><li><a href="global.html#generatePDF">generatePDF</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Mon Apr 20 2026 10:22:07 GMT+0200 (hora de verano de Europa central)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
