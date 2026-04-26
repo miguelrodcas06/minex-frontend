@@ -6,13 +6,13 @@ Proyecto de MineX usando react para crear el front de la aplicación
 
 [https://github.com/miguelrodcas06/minex-frontend](https://github.com/miguelrodcas06/minex-frontend)
 
-## Datos para la conexión a la base de datos
+## Base de datos
 
-- *Nombre de la base de datos:* minex
-- *Usuario:* root
-- *Contraseña:* test
-- *Host:* localhost
-- *Puerto:* 3306
+La aplicación usa **Supabase (PostgreSQL)** en producción. Configura la variable de entorno en el backend:
+
+```
+DATABASE_URL=postgresql://postgres.[proyecto]:[password]@aws-0-eu-west-1.pooler.supabase.com:5432/postgres
+```
 
 ## Ejecución del Proyecto
 
