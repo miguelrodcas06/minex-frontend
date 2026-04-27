@@ -180,6 +180,7 @@ function Panel() {
     ? ultimaActualizacion.toLocaleString("es-ES", {
         day: "numeric", month: "long", year: "numeric",
         hour: "2-digit", minute: "2-digit",
+        timeZone: "Europe/Madrid",
       })
     : null;
 
@@ -247,7 +248,7 @@ function Panel() {
             {ultimaFecha && (
               <Chip
                 icon={<AccessTimeIcon sx={{ fontSize: "13px !important", color: "#fff !important" }} />}
-                label={`Última consulta: ${ultimaFecha}`}
+                label={`Datos consultados: ${ultimaFecha} (retraso ~15 min)`}
                 size="small"
                 sx={{
                   backgroundColor: ORANGE,
