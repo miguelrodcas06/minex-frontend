@@ -247,7 +247,7 @@ function Panel() {
             {ultimaFecha && (
               <Chip
                 icon={<AccessTimeIcon sx={{ fontSize: "13px !important", color: "#fff !important" }} />}
-                label={`Última actualización: ${ultimaFecha}`}
+                label={`Última consulta: ${ultimaFecha}`}
                 size="small"
                 sx={{
                   backgroundColor: ORANGE,

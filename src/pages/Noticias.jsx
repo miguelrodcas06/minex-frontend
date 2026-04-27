@@ -30,15 +30,6 @@ import api from "../api";
 
 const ORANGE = "#e07b39";
 
-const TEMAS_RAPIDOS = [
-  { label: "Mercado del Oro",   tema: "gold market"     },
-  { label: "Plata",             tema: "silver market"   },
-  { label: "Platino",           tema: "platinum market" },
-  { label: "Cobre",             tema: "copper market"   },
-  { label: "Metales Preciosos", tema: "precious metals" },
-  { label: "Minería",           tema: "mining industry" },
-];
-
 function formatFecha(fechaStr) {
   try {
     return new Date(fechaStr).toLocaleDateString("es-ES", {
@@ -55,16 +46,15 @@ function Noticias() {
   const BORDER     = theme.palette.divider;
   const TEXT_MUTED = theme.palette.text.secondary;
 
-  const [noticias,   setNoticias]   = useState([]);
-  const [loading,    setLoading]    = useState(true);
-  const [error,      setError]      = useState(null);
-  const [temaActivo, setTemaActivo] = useState("gold market");
+  const [noticias, setNoticias] = useState([]);
+  const [loading,  setLoading]  = useState(true);
+  const [error,    setError]    = useState(null);
 
-  const fetchNoticias = useCallback(async (tema) => {
+  const fetchNoticias = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.get(`/minerales/noticias?tema=${encodeURIComponent(tema)}`);
+      const res = await api.get("/minerales/noticias");
       setNoticias(res.datos ?? []);
     } catch (e) {
       setError(e.mensaje ?? "No se pudieron cargar las noticias.");
@@ -73,11 +63,7 @@ function Noticias() {
     }
   }, []);
 
-  useEffect(() => { fetchNoticias(temaActivo); }, [temaActivo, fetchNoticias]);
-
-  const handleTemaRapido = (tema) => {
-    setTemaActivo(tema);
-  };
+  useEffect(() => { fetchNoticias(); }, [fetchNoticias]);
 
   return (
     <Box sx={{ bgcolor: "background.default", minHeight: "100vh", py: 4 }}>
@@ -97,30 +83,9 @@ function Noticias() {
             Noticias del Mercado
           </Typography>
         </Box>
-        <Typography variant="body2" sx={{ color: "text.secondary", mb: 2, ml: 7 }}>
+        <Typography variant="body2" sx={{ color: "text.secondary", mb: 3, ml: 7 }}>
           Últimas noticias sobre metales preciosos y mercados de materias primas
         </Typography>
-
-        {/* ── Temas rápidos ── */}
-        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mb: 3 }}>
-          {TEMAS_RAPIDOS.map(({ label, tema }) => (
-            <Chip
-              key={tema}
-              label={label}
-              size="small"
-              onClick={() => handleTemaRapido(tema)}
-              sx={{
-                cursor: "pointer",
-                backgroundColor: temaActivo === tema ? "rgba(224,123,57,0.15)" : "transparent",
-                border: "1px solid",
-                borderColor: temaActivo === tema ? ORANGE : BORDER,
-                color: temaActivo === tema ? ORANGE : TEXT_MUTED,
-                fontWeight: temaActivo === tema ? 600 : 400,
-                "&:hover": { borderColor: ORANGE, color: ORANGE },
-              }}
-            />
-          ))}
-        </Box>
 
         {/* ── Estado: cargando / error / vacío ── */}
         {loading && (
@@ -138,7 +103,7 @@ function Noticias() {
           }}>
             <Typography variant="body1" sx={{ color: "#f44336", mb: 2 }}>{error}</Typography>
             <Button
-              onClick={() => fetchNoticias(temaActivo)}
+              onClick={() => fetchNoticias()}
               startIcon={<RefreshIcon />}
               size="small"
               sx={{ color: ORANGE, textTransform: "none" }}
@@ -162,14 +127,11 @@ function Noticias() {
           <>
             <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
               <Typography variant="body2" sx={{ color: TEXT_MUTED }}>
-                {noticias.length} {noticias.length === 1 ? "noticia" : "noticias"} sobre{" "}
-                <Typography component="span" variant="body2" sx={{ color: ORANGE, fontWeight: 600 }}>
-                  {TEMAS_RAPIDOS.find((t) => t.tema === temaActivo)?.label ?? temaActivo}
-                </Typography>
+                {noticias.length} {noticias.length === 1 ? "noticia" : "noticias"} recientes
               </Typography>
               <IconButton
                 size="small"
-                onClick={() => fetchNoticias(temaActivo)}
+                onClick={() => fetchNoticias()}
                 sx={{ color: TEXT_MUTED, "&:hover": { color: ORANGE } }}
                 title="Actualizar"
               >
