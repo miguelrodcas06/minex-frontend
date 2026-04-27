@@ -20,6 +20,8 @@ import CircularProgress from "@mui/material/CircularProgress";
 
 import CloseIcon from "@mui/icons-material/Close";
 import DiamondIcon from "@mui/icons-material/Diamond";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 
 import api from "../api";
 
@@ -49,9 +51,10 @@ function LoginDialog({ open, onClose, onLoginSuccess }) {
   const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
-  const [loading, setLoading]   = useState(false);
-  const [error, setError]       = useState("");
-  const [success, setSuccess]   = useState("");
+  const [loading, setLoading]       = useState(false);
+  const [error, setError]           = useState("");
+  const [success, setSuccess]       = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const resetForm = () => {
     setEmail(""); setPassword(""); setUsername("");
@@ -221,12 +224,26 @@ function LoginDialog({ open, onClose, onLoginSuccess }) {
 
           <TextField
             label="Contraseña"
-            type="password"
+            type={showPassword ? "text" : "password"}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             fullWidth size="small"
             sx={{ ...inputSx, mb: 3 }}
             autoComplete={isLogin ? "current-password" : "new-password"}
+            slotProps={{
+              input: {
+                endAdornment: (
+                  <IconButton
+                    size="small"
+                    onClick={() => setShowPassword((v) => !v)}
+                    edge="end"
+                    sx={{ color: "text.secondary" }}
+                  >
+                    {showPassword ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
+                  </IconButton>
+                ),
+              },
+            }}
           />
 
           <Button
