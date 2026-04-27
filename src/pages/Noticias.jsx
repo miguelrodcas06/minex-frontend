@@ -16,15 +16,12 @@ import Card from "@mui/material/Card";
 import CardActionArea from "@mui/material/CardActionArea";
 import CardContent from "@mui/material/CardContent";
 import CardMedia from "@mui/material/CardMedia";
-import TextField from "@mui/material/TextField";
-import InputAdornment from "@mui/material/InputAdornment";
 import IconButton from "@mui/material/IconButton";
 import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
 import Button from "@mui/material/Button";
 
 import ArticleIcon from "@mui/icons-material/Article";
-import SearchIcon from "@mui/icons-material/Search";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import NewspaperIcon from "@mui/icons-material/Newspaper";
@@ -33,14 +30,6 @@ import api from "../api";
 
 const ORANGE = "#e07b39";
 
-const TEMAS_RAPIDOS = [
-  { label: "Mercado del Oro",    tema: "gold market"      },
-  { label: "Plata",              tema: "silver market"    },
-  { label: "Platino",            tema: "platinum market"  },
-  { label: "Cobre",              tema: "copper market"    },
-  { label: "Metales Preciosos",  tema: "precious metals"  },
-  { label: "Minería",            tema: "mining industry"  },
-];
 
 function formatFecha(fechaStr) {
   try {
@@ -61,15 +50,12 @@ function Noticias() {
   const [noticias,  setNoticias]  = useState([]);
   const [loading,   setLoading]   = useState(true);
   const [error,     setError]     = useState(null);
-  const [busqueda,  setBusqueda]  = useState("gold market");
-  const [inputVal,  setInputVal]  = useState("");
-  const [temaActivo, setTemaActivo] = useState("gold market");
 
-  const fetchNoticias = useCallback(async (tema) => {
+  const fetchNoticias = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.get(`/minerales/noticias?tema=${encodeURIComponent(tema)}`);
+      const res = await api.get("/minerales/noticias");
       setNoticias(res.datos ?? []);
     } catch (e) {
       setError(e.mensaje ?? "No se pudieron cargar las noticias.");
@@ -78,21 +64,7 @@ function Noticias() {
     }
   }, []);
 
-  useEffect(() => { fetchNoticias(busqueda); }, [busqueda, fetchNoticias]);
-
-  const handleBuscar = () => {
-    const q = inputVal.trim();
-    if (!q) return;
-    setBusqueda(q);
-    setTemaActivo(q);
-    setInputVal("");
-  };
-
-  const handleTemaRapido = (tema) => {
-    setBusqueda(tema);
-    setTemaActivo(tema);
-    setInputVal("");
-  };
+  useEffect(() => { fetchNoticias(); }, [fetchNoticias]);
 
   return (
     <Box sx={{ bgcolor: "background.default", minHeight: "100vh", py: 4 }}>
@@ -116,71 +88,6 @@ function Noticias() {
           Últimas noticias sobre metales preciosos y mercados de materias primas
         </Typography>
 
-        {/* ── Buscador ── */}
-        <Box sx={{
-          bgcolor: CARD_BG,
-          border: "1px solid", borderColor: BORDER,
-          borderRadius: 2, p: 2.5, mb: 3,
-        }}>
-          <TextField
-            fullWidth
-            size="small"
-            placeholder="Buscar noticias... (ej: platinum ETF, copper demand)"
-            value={inputVal}
-            onChange={(e) => setInputVal(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleBuscar()}
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon sx={{ color: TEXT_MUTED, fontSize: 20 }} />
-                  </InputAdornment>
-                ),
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton size="small" onClick={handleBuscar} disabled={!inputVal.trim()}>
-                      <SearchIcon sx={{ color: ORANGE, fontSize: 18 }} />
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              },
-            }}
-            sx={{
-              mb: 2,
-              "& .MuiOutlinedInput-root": {
-                color: "text.primary",
-                bgcolor: "background.default",
-                "& fieldset": { borderColor: BORDER },
-                "&:hover fieldset": { borderColor: "rgba(128,128,128,0.5)" },
-                "&.Mui-focused fieldset": { borderColor: ORANGE },
-              },
-            }}
-          />
-
-          {/* Temas rápidos */}
-          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-            {TEMAS_RAPIDOS.map(({ label, tema }) => (
-              <Chip
-                key={tema}
-                label={label}
-                size="small"
-                onClick={() => handleTemaRapido(tema)}
-                sx={{
-                  cursor: "pointer",
-                  backgroundColor: temaActivo === tema
-                    ? "rgba(224,123,57,0.15)"
-                    : "transparent",
-                  border: "1px solid",
-                  borderColor: temaActivo === tema ? ORANGE : BORDER,
-                  color: temaActivo === tema ? ORANGE : TEXT_MUTED,
-                  fontWeight: temaActivo === tema ? 600 : 400,
-                  "&:hover": { borderColor: ORANGE, color: ORANGE },
-                }}
-              />
-            ))}
-          </Box>
-        </Box>
-
         {/* ── Estado: cargando / error / vacío ── */}
         {loading && (
           <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
@@ -197,7 +104,7 @@ function Noticias() {
           }}>
             <Typography variant="body1" sx={{ color: "#f44336", mb: 2 }}>{error}</Typography>
             <Button
-              onClick={() => fetchNoticias(busqueda)}
+              onClick={() => fetchNoticias()}
               startIcon={<RefreshIcon />}
               size="small"
               sx={{ color: ORANGE, textTransform: "none" }}
@@ -211,7 +118,7 @@ function Noticias() {
           <Box sx={{ textAlign: "center", py: 8 }}>
             <NewspaperIcon sx={{ fontSize: 64, color: BORDER, mb: 2 }} />
             <Typography variant="body1" sx={{ color: TEXT_MUTED }}>
-              No se encontraron noticias para "{busqueda}"
+              No se encontraron noticias en este momento
             </Typography>
           </Box>
         )}
@@ -221,14 +128,11 @@ function Noticias() {
           <>
             <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
               <Typography variant="body2" sx={{ color: TEXT_MUTED }}>
-                {noticias.length} {noticias.length === 1 ? "noticia" : "noticias"} sobre{" "}
-                <Typography component="span" variant="body2" sx={{ color: ORANGE, fontWeight: 600 }}>
-                  {temaActivo}
-                </Typography>
+                {noticias.length} {noticias.length === 1 ? "noticia" : "noticias"} recientes
               </Typography>
               <IconButton
                 size="small"
-                onClick={() => fetchNoticias(busqueda)}
+                onClick={() => fetchNoticias()}
                 sx={{ color: TEXT_MUTED, "&:hover": { color: ORANGE } }}
                 title="Actualizar"
               >
