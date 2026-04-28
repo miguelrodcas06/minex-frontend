@@ -47,7 +47,7 @@ function LoginDialog({ open, onClose, onLoginSuccess }) {
     "& .MuiInputLabel-root.Mui-focused": { color: ORANGE },
   };
 
-  const [modo, setModo]         = useState("login"); // "login" | "registro" | "reactivar"
+  const [modo, setModo]         = useState("login"); // "login" | "registro" | "reactivar" | "recuperar"
   const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
@@ -107,6 +107,7 @@ function LoginDialog({ open, onClose, onLoginSuccess }) {
   const handleRegistro = async (e) => {
     e.preventDefault();
     if (!username || !email || !password) { setError("Completa todos los campos."); return; }
+    if (password.length < 6) { setError("La contraseña debe tener al menos 6 caracteres."); return; }
     setLoading(true); setError("");
     try {
       await api.post("/usuarios", { username, email, password });
@@ -121,6 +122,7 @@ function LoginDialog({ open, onClose, onLoginSuccess }) {
 
   const isLogin      = modo === "login";
   const isReactivar  = modo === "reactivar";
+  const isRecuperar  = modo === "recuperar";
   const isDark       = theme.palette.mode === "dark";
 
   return (
@@ -166,13 +168,15 @@ function LoginDialog({ open, onClose, onLoginSuccess }) {
 
         {/* Título */}
         <Typography variant="h6" sx={{ color: "text.primary", fontWeight: 700, mb: 0.5 }}>
-          {isLogin ? "Iniciar Sesión" : isReactivar ? "Reactivar cuenta" : "Crear cuenta"}
+          {isLogin ? "Iniciar Sesión" : isReactivar ? "Reactivar cuenta" : isRecuperar ? "Recuperar contraseña" : "Crear cuenta"}
         </Typography>
         <Typography variant="body2" sx={{ color: "text.secondary", mb: 3 }}>
           {isLogin
             ? "Accede a tu cuenta de MineX para gestionar tu tesorería."
             : isReactivar
             ? "Introduce tus credenciales para reactivar tu cuenta."
+            : isRecuperar
+            ? "Te enviaremos un enlace para restablecer tu contraseña."
             : "Regístrate para guardar tus alertas y tesorería."}
         </Typography>
 
@@ -198,8 +202,39 @@ function LoginDialog({ open, onClose, onLoginSuccess }) {
           </Alert>
         )}
 
-        {/* Formulario */}
-        <Box component="form" onSubmit={isLogin ? handleLogin : isReactivar ? handleReactivar : handleRegistro}>
+        {/* Formulario recuperar contraseña */}
+        {isRecuperar && (
+          <Box component="form" onSubmit={async (e) => {
+            e.preventDefault();
+            if (!email) { setError("Introduce tu email."); return; }
+            setLoading(true); setError("");
+            try {
+              await api.post("/usuarios/recuperar-password", { email });
+              setSuccess("Si el email está registrado, recibirás un enlace en tu bandeja de entrada.");
+            } catch {
+              setError("No se pudo enviar el email. Inténtalo más tarde.");
+            } finally { setLoading(false); }
+          }}>
+            <TextField
+              label="Correo electrónico"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              fullWidth size="small"
+              placeholder="correo@ejemplo.com"
+              sx={{ ...inputSx, mb: 3 }}
+              autoComplete="email"
+            />
+            <Button type="submit" fullWidth disabled={loading}
+              sx={{ backgroundColor: ORANGE, color: "white", textTransform: "none", fontWeight: 700, py: 1.2, boxShadow: "none", "&:hover": { backgroundColor: "#c96a2a", boxShadow: "none" } }}>
+              {loading ? <CircularProgress size={20} sx={{ color: "white" }} /> : "Enviar enlace de recuperación"}
+            </Button>
+          </Box>
+        )}
+
+        {/* Formulario login / registro / reactivar */}
+        <Box component="form" onSubmit={isLogin ? handleLogin : isReactivar ? handleReactivar : handleRegistro}
+          sx={{ display: isRecuperar ? "none" : "block" }}>
           {!isLogin && !isReactivar && (
             <TextField
               label="Nombre de usuario"
@@ -246,6 +281,18 @@ function LoginDialog({ open, onClose, onLoginSuccess }) {
             }}
           />
 
+          {isLogin && (
+            <Box sx={{ textAlign: "right", mb: 2, mt: -1.5 }}>
+              <Box
+                component="span"
+                onClick={() => cambiarModo("recuperar")}
+                sx={{ color: ORANGE, cursor: "pointer", fontSize: "0.75rem", fontWeight: 600, "&:hover": { textDecoration: "underline" } }}
+              >
+                ¿Olvidaste tu contraseña?
+              </Box>
+            </Box>
+          )}
+
           <Button
             type="submit"
             fullWidth
@@ -269,16 +316,16 @@ function LoginDialog({ open, onClose, onLoginSuccess }) {
           </Button>
         </Box>
 
-        {/* Toggle login / registro / reactivar */}
+        {/* Toggle login / registro / reactivar / recuperar */}
         <Box sx={{ textAlign: "center", mt: 2.5 }}>
           <Typography variant="caption" sx={{ color: "text.secondary" }}>
-            {isReactivar ? "¿Recuerdas tu contraseña? " : isLogin ? "¿No tienes cuenta? " : "¿Ya tienes cuenta? "}
+            {isLogin ? "¿No tienes cuenta? " : "¿Recuerdas tu contraseña? "}
             <Box
               component="span"
-              onClick={() => cambiarModo(isReactivar ? "login" : isLogin ? "registro" : "login")}
+              onClick={() => cambiarModo(isLogin ? "registro" : "login")}
               sx={{ color: ORANGE, cursor: "pointer", fontWeight: 600, "&:hover": { textDecoration: "underline" } }}
             >
-              {isReactivar ? "Inicia sesión" : isLogin ? "Regístrate" : "Inicia sesión"}
+              {isLogin ? "Regístrate" : "Inicia sesión"}
             </Box>
           </Typography>
         </Box>

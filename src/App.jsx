@@ -13,6 +13,7 @@ import Home from "./pages/Home";
 import Panel from "./pages/Panel";
 import Simulador from "./pages/Simulador";
 import ErrorPage from "./pages/ErrorPage";
+import ResetPassword from "./pages/ResetPassword";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 const router = createBrowserRouter([
@@ -32,6 +33,10 @@ const router = createBrowserRouter([
       { path: "noticias",  lazy: () => import("./pages/Noticias").then((m) => ({ Component: m.default })) },
       { path: "catalogo", lazy: () => import("./pages/Catalogo").then((m) => ({ Component: m.default })) },
     ],
+  },
+  {
+    path: "/reset-password",
+    Component: ResetPassword,
   },
   {
     path: "*",
