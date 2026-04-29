@@ -483,7 +483,7 @@ function Panel() {
             </Box>
           ) : (
             <ResponsiveContainer width="100%" height={460}>
-              <LineChart data={historico} margin={{ top: 10, right: 20, left: 10, bottom: 5 }}>
+              <LineChart data={historico} margin={{ top: 10, right: 10, left: 10, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
                 <XAxis
                   dataKey="fecha"
@@ -491,6 +491,7 @@ function Panel() {
                   axisLine={{ stroke: BORDER }}
                   tickLine={false}
                   interval="preserveStartEnd"
+                  padding={{ left: 0, right: 0 }}
                 />
                 <YAxis
                   tick={{ fill: TEXT_MUTED, fontSize: 11 }}
