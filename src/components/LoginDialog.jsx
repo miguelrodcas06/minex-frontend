@@ -19,7 +19,6 @@ import Alert from "@mui/material/Alert";
 import CircularProgress from "@mui/material/CircularProgress";
 
 import CloseIcon from "@mui/icons-material/Close";
-import DiamondIcon from "@mui/icons-material/Diamond";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 
@@ -160,7 +159,7 @@ function LoginDialog({ open, onClose, onLoginSuccess }) {
 
         {/* Logo */}
         <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2.5 }}>
-          <DiamondIcon sx={{ color: ORANGE }} />
+          <Box component="img" src="/logo.png" alt="MineX" sx={{ width: 28, height: 28, borderRadius: 1, objectFit: "cover" }} />
           <Typography variant="subtitle1" sx={{ color: "text.primary", fontWeight: 700 }}>
             MineX
           </Typography>

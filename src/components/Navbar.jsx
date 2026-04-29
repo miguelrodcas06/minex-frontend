@@ -22,7 +22,6 @@ import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
 import { NavLink, useNavigate } from "react-router";
 
-import DiamondIcon from "@mui/icons-material/Diamond";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import CompareArrowsIcon from "@mui/icons-material/CompareArrows";
 import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
@@ -88,20 +87,9 @@ function SidebarContent({ onClose, isLoggedIn, usuario, onOpenLogin, onLogout, o
             textDecoration: "none",
           }}
         >
-          <Box
-            sx={{
-              width: 36,
-              height: 36,
-              borderRadius: 1.5,
-              backgroundColor: ORANGE,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
-            }}
-          >
-            <DiamondIcon sx={{ color: "#fff", fontSize: 20 }} />
-          </Box>
+          <Box component="img" src="/logo.png" alt="MineX"
+            sx={{ width: 36, height: 36, borderRadius: 1.5, flexShrink: 0, objectFit: "cover" }}
+          />
           <Box>
             <Typography
               variant="subtitle2"
@@ -352,19 +340,9 @@ function Navbar() {
             to="/"
             sx={{ display: "flex", alignItems: "center", gap: 1, textDecoration: "none" }}
           >
-            <Box
-              sx={{
-                width: 30,
-                height: 30,
-                borderRadius: 1.5,
-                backgroundColor: ORANGE,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <DiamondIcon sx={{ color: "#fff", fontSize: 17 }} />
-            </Box>
+            <Box component="img" src="/logo.png" alt="MineX"
+              sx={{ width: 30, height: 30, borderRadius: 1.5, objectFit: "cover" }}
+            />
             <Typography variant="subtitle1" sx={{ color: "text.primary", fontWeight: 700 }}>
               MineX
             </Typography>

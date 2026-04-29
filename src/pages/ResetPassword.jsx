@@ -9,7 +9,6 @@ import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
 import Alert from "@mui/material/Alert";
 import CircularProgress from "@mui/material/CircularProgress";
-import DiamondIcon from "@mui/icons-material/Diamond";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 
@@ -84,7 +83,7 @@ function ResetPassword() {
         <Box sx={{ p: { xs: 3, sm: 4 }, borderRadius: 3, bgcolor: "background.paper", border: "1px solid", borderColor: "divider" }}>
 
           <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2.5 }}>
-            <DiamondIcon sx={{ color: ORANGE }} />
+            <Box component="img" src="/logo.png" alt="MineX" sx={{ width: 28, height: 28, borderRadius: 1, objectFit: "cover" }} />
             <Typography variant="subtitle1" sx={{ color: "text.primary", fontWeight: 700 }}>MineX</Typography>
           </Box>
 
