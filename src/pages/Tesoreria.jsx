@@ -124,11 +124,13 @@ function Tesoreria() {
   });
 
   // ── Add form ──
-  const [mineral,      setMineral]      = useState("oro");
-  const [cantidad,     setCantidad]     = useState("");
-  const [precioActual, setPrecioActual] = useState(null);
-  const [addLoading,   setAddLoading]   = useState(false);
-  const [addError,     setAddError]     = useState(null);
+  const [mineral,           setMineral]           = useState("oro");
+  const [cantidad,          setCantidad]          = useState("");
+  const [precioActual,      setPrecioActual]      = useState(null);
+  const [usarPrecioCustom,  setUsarPrecioCustom]  = useState(false);
+  const [precioCustom,      setPrecioCustom]      = useState("");
+  const [addLoading,        setAddLoading]        = useState(false);
+  const [addError,          setAddError]          = useState(null);
 
   // ── Delete / sell dialog ──
   const [deleteDialog,  setDeleteDialog]  = useState({ open: false, item: null });
@@ -184,16 +186,19 @@ function Tesoreria() {
 
   const handleAgregar = async () => {
     const cant = parseFloat(cantidad);
-    if (!cant || cant <= 0) {
-      setAddError("Introduce una cantidad válida en gramos.");
-      return;
+    if (!cant || cant <= 0) { setAddError("Introduce una cantidad válida en gramos."); return; }
+    if (usarPrecioCustom && (!precioCustom || parseFloat(precioCustom) <= 0)) {
+      setAddError("Introduce un precio personalizado válido."); return;
     }
     setAddLoading(true);
     setAddError(null);
     try {
-      const res = await api.post("/tesoreria", { mineral, cantidad: cant });
+      const body = { mineral, cantidad: cant };
+      if (usarPrecioCustom) body.precioPersonalizado = parseFloat(precioCustom);
+      const res = await api.post("/tesoreria", body);
       if (res.datos?.nuevo_balance !== undefined) updateBalance(res.datos.nuevo_balance);
       setCantidad("");
+      setPrecioCustom("");
       setSnackbar({ open: true, message: res.mensaje, severity: "success" });
       await fetchTesoreria();
     } catch (e) {
@@ -245,8 +250,9 @@ function Tesoreria() {
     ? (balanceTotal / parseFloat(resumen.total_invertido)) * 100
     : 0;
 
-  const costoEstimado = precioActual && cantidad && parseFloat(cantidad) > 0
-    ? precioActual * parseFloat(cantidad)
+  const precioEfectivo = usarPrecioCustom ? parseFloat(precioCustom) : precioActual;
+  const costoEstimado = precioEfectivo > 0 && cantidad && parseFloat(cantidad) > 0
+    ? precioEfectivo * parseFloat(cantidad)
     : null;
 
   // ─── Render ─────────────────────────────────────────────────────────────────
@@ -404,7 +410,7 @@ function Tesoreria() {
                 {/* Current price badge */}
                 {precioActual !== null ? (
                   <Box sx={{
-                    mb: 2, p: 1.5,
+                    mb: 1.5, p: 1.5,
                     backgroundColor: "rgba(255,255,255,0.04)",
                     borderRadius: 1,
                     border: `1px solid ${BORDER}`,
@@ -415,10 +421,51 @@ function Tesoreria() {
                     </Typography>
                   </Box>
                 ) : (
-                  <Box sx={{ mb: 2, display: "flex", alignItems: "center", gap: 1 }}>
+                  <Box sx={{ mb: 1.5, display: "flex", alignItems: "center", gap: 1 }}>
                     <CircularProgress size={12} sx={{ color: TEXT_MUTED }} />
                     <Typography variant="caption" sx={{ color: TEXT_MUTED }}>Cargando precio...</Typography>
                   </Box>
+                )}
+
+                {/* Toggle precio personalizado */}
+                <Box
+                  onClick={() => { setUsarPrecioCustom((v) => !v); setPrecioCustom(""); setAddError(null); }}
+                  sx={{
+                    mb: 2, display: "flex", alignItems: "center", gap: 1,
+                    cursor: "pointer", userSelect: "none",
+                  }}
+                >
+                  <Box sx={{
+                    width: 32, height: 18, borderRadius: 9,
+                    backgroundColor: usarPrecioCustom ? ORANGE : "rgba(255,255,255,0.15)",
+                    position: "relative", transition: "background 0.2s", flexShrink: 0,
+                  }}>
+                    <Box sx={{
+                      width: 12, height: 12, borderRadius: "50%",
+                      backgroundColor: "#fff",
+                      position: "absolute", top: 3,
+                      left: usarPrecioCustom ? 17 : 3,
+                      transition: "left 0.2s",
+                    }} />
+                  </Box>
+                  <Typography variant="caption" sx={{ color: TEXT_MUTED }}>
+                    Precio personalizado
+                  </Typography>
+                </Box>
+
+                {/* Campo precio personalizado */}
+                {usarPrecioCustom && (
+                  <TextField
+                    label="Precio de compra (USD/g)"
+                    value={precioCustom}
+                    onChange={(e) => { setPrecioCustom(e.target.value); setAddError(null); }}
+                    type="number"
+                    fullWidth
+                    size="small"
+                    placeholder="ej: 57.07"
+                    slotProps={{ htmlInput: { min: 0.01, step: "0.01" } }}
+                    sx={{ ...textFieldSx, mb: 2 }}
+                  />
                 )}
 
                 {/* Quantity input */}
