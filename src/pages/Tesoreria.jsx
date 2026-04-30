@@ -40,8 +40,11 @@ import SavingsIcon from "@mui/icons-material/Savings";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import ShowChartIcon from "@mui/icons-material/ShowChart";
+import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 
 import api from "../api";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 const MINERALS = [
   { nombre: "oro",     label: "Oro",     symbol: "Au", color: "#FFD700" },
@@ -255,6 +258,145 @@ function Tesoreria() {
     ? precioEfectivo * parseFloat(cantidad)
     : null;
 
+  // ─── Exportar PDF ───────────────────────────────────────────────────────────
+
+  const exportarPDF = async () => {
+    const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+    const NARANJA = [224, 123, 57];
+    const BLANCO  = [255, 255, 255];
+    const GRIS    = [120, 120, 120];
+    const NEGRO   = [30, 30, 30];
+    const fechaHoy = new Date().toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" });
+    const W = 210;
+
+    // ── Cargar favicon ────────────────────────────────────────────────────────
+    let logoBase64 = null;
+    try {
+      const img = new Image();
+      img.src = "/favicon.png";
+      await new Promise((resolve) => { img.onload = resolve; img.onerror = resolve; });
+      const canvas = document.createElement("canvas");
+      canvas.width = img.width; canvas.height = img.height;
+      canvas.getContext("2d").drawImage(img, 0, 0);
+      logoBase64 = canvas.toDataURL("image/png");
+    } catch { /* sin logo */ }
+
+    // ── Cabecera naranja ──────────────────────────────────────────────────────
+    doc.setFillColor(...NARANJA);
+    doc.rect(0, 0, W, 38, "F");
+
+    // Logo
+    if (logoBase64) {
+      doc.addImage(logoBase64, "PNG", 14, 7, 24, 24);
+    }
+
+    // Título y subtítulo con fecha
+    doc.setTextColor(...BLANCO);
+    doc.setFontSize(18);
+    doc.setFont("helvetica", "bold");
+    doc.text("MineX", 44, 17);
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Informe de Tesorería · ${fechaHoy}`, 44, 26);
+
+    // Línea separadora
+    doc.setDrawColor(...NARANJA);
+    doc.setLineWidth(0.5);
+    doc.line(14, 42, W - 14, 42);
+
+    // ── Resumen ───────────────────────────────────────────────────────────────
+    let y = 50;
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...NEGRO);
+    doc.text("Resumen de Cartera", 14, y);
+    y += 7;
+
+    const totalInv = parseFloat(resumen?.total_invertido ?? 0);
+    const valorAct = parseFloat(resumen?.valor_actual_total ?? 0);
+    const ganPerd  = parseFloat(resumen?.balance_total ?? 0);
+    const pct      = totalInv > 0 ? (ganPerd / totalInv) * 100 : 0;
+    const esPos    = ganPerd >= 0;
+    const balanceUser = balance ?? 0;
+
+    const cajas = [
+      { label: "Total Invertido",                      valor: `$${fmt(totalInv)}`,   color: [100, 181, 246] },
+      { label: "Valor Actual",                         valor: `$${fmt(valorAct)}`,   color: NARANJA },
+      { label: esPos ? "Ganancia" : "Pérdida",
+        valor: `${esPos ? "+" : ""}$${fmt(Math.abs(ganPerd))} (${esPos ? "+" : ""}${fmt(pct)}%)`,
+        color: esPos ? [76, 175, 80] : [244, 67, 54] },
+      { label: "Balance Disponible",                   valor: `$${fmt(balanceUser)}`, color: [156, 39, 176] },
+    ];
+
+    const boxW = (W - 28 - 12) / 4;
+    cajas.forEach(({ label, valor, color }, i) => {
+      const x = 14 + i * (boxW + 4);
+      doc.setFillColor(245, 245, 245);
+      doc.roundedRect(x, y, boxW, 22, 2, 2, "F");
+      doc.setDrawColor(...color);
+      doc.setLineWidth(0.8);
+      doc.roundedRect(x, y, boxW, 22, 2, 2, "S");
+      doc.setFontSize(7);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(...GRIS);
+      doc.text(label, x + boxW / 2, y + 7, { align: "center" });
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(color[0], color[1], color[2]);
+      doc.text(valor, x + boxW / 2, y + 16, { align: "center" });
+    });
+
+    y += 30;
+
+    // ── Tabla de posiciones ───────────────────────────────────────────────────
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...NEGRO);
+    doc.text("Posiciones", 14, y);
+    y += 4;
+
+    autoTable(doc, {
+      startY: y,
+      margin: { left: 14, right: 14 },
+      head: [["Mineral", "Cantidad (g)", "P. Compra", "P. Actual", "Invertido", "Valor Act.", "Rend.", "%"]],
+      body: items.map((item) => {
+        const itemPct = item.precio_compra > 0
+          ? ((item.precio_actual - item.precio_compra) / item.precio_compra) * 100
+          : 0;
+        const rend = parseFloat(item.rendimiento);
+        return [
+          item.mineral.charAt(0).toUpperCase() + item.mineral.slice(1),
+          fmt(item.cantidad, 4),
+          `$${fmt(item.precio_compra)}`,
+          `$${fmt(item.precio_actual)}`,
+          `$${fmt(item.valor_invertido)}`,
+          `$${fmt(item.valor_actual)}`,
+          `${rend >= 0 ? "+" : ""}$${fmt(Math.abs(rend))}`,
+          `${itemPct >= 0 ? "+" : ""}${fmt(itemPct)}%`,
+        ];
+      }),
+      styles: { fontSize: 8, cellPadding: 3, textColor: NEGRO },
+      headStyles: { fillColor: NARANJA, textColor: BLANCO, fontStyle: "bold", fontSize: 8 },
+      alternateRowStyles: { fillColor: [248, 248, 248] },
+      columnStyles: { 0: { fontStyle: "bold" } },
+      didParseCell(data) {
+        if (data.section === "body" && (data.column.index === 6 || data.column.index === 7)) {
+          const val = parseFloat(data.cell.raw);
+          data.cell.styles.textColor = val >= 0 ? [76, 175, 80] : [244, 67, 54];
+        }
+      },
+    });
+
+    // ── Pie de página ─────────────────────────────────────────────────────────
+    const finalY = doc.lastAutoTable.finalY + 8;
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...GRIS);
+    doc.text("MineX · Plataforma de seguimiento de metales preciosos · Solo carácter informativo", W / 2, finalY, { align: "center" });
+
+    doc.save(`MineX_Tesoreria_${fechaHoy.replace(/ /g, "_")}.pdf`);
+  };
+
   // ─── Render ─────────────────────────────────────────────────────────────────
 
   return (
@@ -286,20 +428,39 @@ function Tesoreria() {
             </Typography>
           </Box>
 
-          {balance !== null && (
-            <Chip
-              icon={<AttachMoneyIcon sx={{ color: `${ORANGE} !important` }} />}
-              label={`Balance disponible: $${fmt(balance)}`}
-              sx={{
-                backgroundColor: "rgba(224,123,57,0.1)",
-                border: "1px solid rgba(224,123,57,0.3)",
-                color: ORANGE,
-                fontWeight: 600,
-                fontSize: "0.875rem",
-                height: 36,
-              }}
-            />
-          )}
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
+            {balance !== null && (
+              <Chip
+                icon={<AttachMoneyIcon sx={{ color: `${ORANGE} !important` }} />}
+                label={`Balance disponible: $${fmt(balance)}`}
+                sx={{
+                  backgroundColor: "rgba(224,123,57,0.1)",
+                  border: "1px solid rgba(224,123,57,0.3)",
+                  color: ORANGE,
+                  fontWeight: 600,
+                  fontSize: "0.875rem",
+                  height: 36,
+                }}
+              />
+            )}
+            {!loading && items.length > 0 && (
+              <Button
+                onClick={exportarPDF}
+                startIcon={<PictureAsPdfIcon />}
+                size="small"
+                sx={{
+                  backgroundColor: "rgba(224,123,57,0.1)",
+                  border: "1px solid rgba(224,123,57,0.3)",
+                  color: ORANGE,
+                  textTransform: "none",
+                  fontWeight: 600,
+                  "&:hover": { backgroundColor: "rgba(224,123,57,0.2)" },
+                }}
+              >
+                Exportar PDF
+              </Button>
+            )}
+          </Box>
         </Box>
 
         {/* ── Summary cards ── */}
