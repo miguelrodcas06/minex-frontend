@@ -248,7 +248,7 @@ function Panel() {
             {ultimaFecha && (
               <Chip
                 icon={<AccessTimeIcon sx={{ fontSize: "13px !important", color: "#fff !important" }} />}
-                label={`Datos consultados: ${ultimaFecha} (retraso ~15 min)`}
+                label="Los precios se actualizan cada 15 minutos"
                 size="small"
                 sx={{
                   backgroundColor: ORANGE,
